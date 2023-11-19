@@ -7,6 +7,7 @@ import (
 
 type Store struct {
 	userRepository *UserRepository
+	taskRepository *TaskRepository
 }
 
 func New() *Store {
@@ -22,4 +23,15 @@ func (s *Store) User() store.UserRepository {
 	}
 
 	return s.userRepository
+}
+
+func (s *Store) Task() store.TaskRepository {
+	if s.userRepository == nil {
+		s.taskRepository = &TaskRepository{
+			store: s,
+			tasks: make(map[int]*model.Task),
+		}
+	}
+
+	return s.taskRepository
 }
