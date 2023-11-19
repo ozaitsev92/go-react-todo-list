@@ -25,7 +25,7 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 	u.ID = 1
 
 	task1 := model.TestTask(t, u)
-	task1.Text = "this is a completed task"
+	task1.TaskText = "this is a completed task"
 	task1.IsDone = true
 	taskRepo.Create(task1)
 
@@ -47,7 +47,7 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 
 	assert.NotNil(t, userTask1)
 	assert.Equal(t, task1.ID, userTasks[0].ID)
-	assert.Equal(t, task1.Text, userTasks[0].Text)
+	assert.Equal(t, task1.TaskText, userTasks[0].TaskText)
 	assert.Equal(t, task1.IsDone, userTasks[0].IsDone)
 	assert.Equal(t, task1.UserID, userTasks[0].UserID)
 
@@ -61,7 +61,7 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 
 	assert.NotNil(t, userTask2)
 	assert.Equal(t, task2.ID, userTasks[1].ID)
-	assert.Equal(t, task2.Text, userTasks[1].Text)
+	assert.Equal(t, task2.TaskText, userTasks[1].TaskText)
 	assert.Equal(t, task2.IsDone, userTasks[1].IsDone)
 	assert.Equal(t, task2.UserID, userTasks[1].UserID)
 }

@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO replace ID int with UUID
 type User struct {
 	ID                int    `json:"id"`
 	Email             string `json:"email"`

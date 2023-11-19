@@ -24,10 +24,10 @@ func TestTask_Validate(t *testing.T) {
 			isValid: true,
 		},
 		{
-			name: "task Text is empty",
+			name: "task TaskText is empty",
 			task: func() *model.Task {
 				task := model.TestTask(t, u)
-				task.Text = ""
+				task.TaskText = ""
 				return task
 			},
 			isValid: false,
