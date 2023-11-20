@@ -154,3 +154,23 @@ func TestServer_AuthenticateUser(t *testing.T) {
 		})
 	}
 }
+
+func TestServer_HandleTasksCreate(t *testing.T) {
+	t.Skip("TODO implement")
+}
+
+func TestServer_HandleTasksGetAllByUse(t *testing.T) {
+	t.Skip("TODO implement")
+}
+
+func TestServer_HandleTasksMarkAsDone(t *testing.T) {
+	t.Skip("TODO implement")
+}
+
+func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
+	t.Skip("TODO implement")
+}
+
+func TestServer_HandleTasksDelete(t *testing.T) {
+	t.Skip("TODO implement")
+}
