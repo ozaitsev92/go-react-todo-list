@@ -60,12 +60,13 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods(http.MethodPost)
 	s.router.HandleFunc("/sessions", s.handleSessionsCreate()).Methods(http.MethodPost)
 
-	private := s.router.NewRoute().Subrouter()
-	private.Use(s.authenticateUser)
-	private.HandleFunc("/users/{user_id:[0-9]+}/tasks", s.handleTasksCreate()).Methods(http.MethodPost)
-	private.HandleFunc("/users/{user_id:[0-9]+}/tasks", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
-	private.HandleFunc("/users/{user_id:[0-9]+}/tasks/{task_id:[0-9]+}/mark-done", s.handleTasksMarkAsDone()).Methods(http.MethodPut)
-	private.HandleFunc("/users/{user_id:[0-9]+}/tasks/{task_id:[0-9]+}/mark-not-done", s.handleTasksMarkAsNotDone()).Methods(http.MethodPut)
+	tasksSubRouter := s.router.PathPrefix("/users/{user_id:[0-9]+}/tasks").Subrouter()
+	tasksSubRouter.Use(s.authenticateUser)
+	tasksSubRouter.HandleFunc("/", s.handleTasksCreate()).Methods(http.MethodPost)
+	tasksSubRouter.HandleFunc("/", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
+	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}", s.handleTasksDelete()).Methods(http.MethodDelete)
+	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}/mark-done", s.handleTasksMarkAsDone()).Methods(http.MethodPut)
+	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}/mark-not-done", s.handleTasksMarkAsNotDone()).Methods(http.MethodPut)
 }
 
 // TODO implement
@@ -91,6 +92,13 @@ func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
 
 // TODO implement
 func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
+	}
+}
+
+// TODO implement
+func (s *server) handleTasksDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
 	}

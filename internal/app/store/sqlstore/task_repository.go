@@ -100,3 +100,12 @@ func (r *TaskRepository) MarkAsNotDone(TaskID int) (*model.Task, error) {
 
 	return t, nil
 }
+
+func (r *TaskRepository) Delete(TaskID int) error {
+	_, err := r.store.db.Exec("DELETE FROM tasks WHERE id = $1;", TaskID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
