@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ const (
 var (
 	errIncorrectEmailOrPassword = errors.New("incorrect email or password")
 	errNotAuthenticated         = errors.New("not authenticated")
+	errNotAuthorized            = errors.New("not authorized")
 )
 
 type ctxKey int8
@@ -69,38 +71,139 @@ func (s *server) configureRouter() {
 	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}/mark-not-done", s.handleTasksMarkAsNotDone()).Methods(http.MethodPut)
 }
 
-// TODO implement
 func (s *server) handleTasksCreate() http.HandlerFunc {
+	type request struct {
+		TaskText  string `json:"task_text"`
+		TaskOrder int    `json:"task_order"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		u := r.Context().Value(ctxKeyUser).(*model.User)
+		if u.ID != UserID {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		t := &model.Task{
+			TaskText:  req.TaskText,
+			TaskOrder: req.TaskOrder,
+			UserID:    UserID,
+		}
+
+		if err := s.store.Task().Create(t); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, t)
 	}
 }
 
-// TODO implement
 func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
+		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		u := r.Context().Value(ctxKeyUser).(*model.User)
+		if u.ID != UserID {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		userTasks, err := s.store.Task().GetAllByUser(UserID)
+		if err != nil {
+			if err == store.ErrRecordNotFound {
+				s.error(w, r, http.StatusNotFound, err)
+			} else {
+				s.error(w, r, http.StatusInternalServerError, err)
+			}
+
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, userTasks)
 	}
 }
 
-// TODO implement
 func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
+		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		u := r.Context().Value(ctxKeyUser).(*model.User)
+		if u.ID != UserID {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		TaskID, _ := strconv.Atoi(mux.Vars(r)["task_id"])
+
+		t, err := s.store.Task().MarkAsDone(TaskID)
+		if err != nil {
+			if err == store.ErrRecordNotFound {
+				s.error(w, r, http.StatusNotFound, err)
+			} else {
+				s.error(w, r, http.StatusInternalServerError, err)
+			}
+
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, t)
 	}
 }
 
-// TODO implement
 func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
+		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		u := r.Context().Value(ctxKeyUser).(*model.User)
+		if u.ID != UserID {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		TaskID, _ := strconv.Atoi(mux.Vars(r)["task_id"])
+
+		t, err := s.store.Task().MarkAsNotDone(TaskID)
+		if err != nil {
+			if err == store.ErrRecordNotFound {
+				s.error(w, r, http.StatusNotFound, err)
+			} else {
+				s.error(w, r, http.StatusInternalServerError, err)
+			}
+
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, t)
 	}
 }
 
-// TODO implement
 func (s *server) handleTasksDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.error(w, r, http.StatusInternalServerError, errors.New("route not implemeneted yet"))
+		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		u := r.Context().Value(ctxKeyUser).(*model.User)
+		if u.ID != UserID {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		TaskID, _ := strconv.Atoi(mux.Vars(r)["task_id"])
+
+		if err := s.store.Task().Delete(TaskID); err != nil {
+			if err == store.ErrRecordNotFound {
+				s.error(w, r, http.StatusNotFound, err)
+			} else {
+				s.error(w, r, http.StatusInternalServerError, err)
+			}
+
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, nil)
 	}
 }
 
