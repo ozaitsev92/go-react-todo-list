@@ -102,3 +102,24 @@ func TestTaskRepository_MarkAsNotDone(t *testing.T) {
 	assert.NotNil(t, task)
 	assert.False(t, task.IsDone)
 }
+
+func TestTaskRepository_Delete(t *testing.T) {
+	s := teststore.New()
+	taskRepo := s.Task()
+
+	u := model.TestUser(t)
+	u.ID = 1
+	task := model.TestTask(t, u)
+	task.IsDone = true
+
+	assert.NoError(t, taskRepo.Create(task))
+	assert.NotNil(t, task)
+	assert.True(t, task.IsDone)
+
+	err := taskRepo.Delete(task.ID)
+	assert.NoError(t, err)
+
+	userTasks, err := taskRepo.GetAllByUser(u.ID)
+	assert.NoError(t, err)
+	assert.Len(t, userTasks, 0)
+}

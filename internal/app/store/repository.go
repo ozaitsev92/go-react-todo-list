@@ -13,4 +13,5 @@ type TaskRepository interface {
 	GetAllByUser(int) ([]*model.Task, error)
 	MarkAsDone(int) (*model.Task, error)
 	MarkAsNotDone(int) (*model.Task, error)
+	Delete(int) error
 }

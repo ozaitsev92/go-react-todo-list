@@ -51,3 +51,12 @@ func (r *TaskRepository) MarkAsNotDone(ID int) (*model.Task, error) {
 		return nil, store.ErrRecordNotFound
 	}
 }
+
+func (r *TaskRepository) Delete(ID int) error {
+	if _, ok := r.tasks[ID]; ok {
+		delete(r.tasks, ID)
+		return nil
+	} else {
+		return store.ErrRecordNotFound
+	}
+}

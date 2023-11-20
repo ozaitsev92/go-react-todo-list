@@ -105,3 +105,27 @@ func TestTaskRepository_MarkAsNotDone(t *testing.T) {
 	assert.NotNil(t, task)
 	assert.False(t, task.IsDone)
 }
+
+func TestTaskRepository_Delete(t *testing.T) {
+	db, teardown := sqlstore.TestDB(t, databaseURL)
+	defer teardown("users", "tasks")
+
+	s := sqlstore.New(db)
+
+	u := model.TestUser(t)
+	assert.NoError(t, s.User().Create(u))
+	assert.NotNil(t, u)
+
+	task := model.TestTask(t, u)
+	task.IsDone = true
+	assert.NoError(t, s.Task().Create(task))
+	assert.NotNil(t, task)
+	assert.True(t, task.IsDone)
+
+	err := s.Task().Delete(task.ID)
+	assert.NoError(t, err)
+
+	userTasks, err := s.Task().GetAllByUser(u.ID)
+	assert.NoError(t, err)
+	assert.Len(t, userTasks, 0)
+}
