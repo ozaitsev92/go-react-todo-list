@@ -4,6 +4,8 @@ CREATE TABLE tasks (
     task_order smallint not null,
     is_done boolean not null,
     user_id uuid not null,
+    created_at timestamp not null,
+    updated_at timestamp not null,
     CONSTRAINT fk_user_id
       FOREIGN KEY(user_id)
       REFERENCES users(id)
