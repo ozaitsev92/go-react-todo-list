@@ -3,6 +3,7 @@ package teststore_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/teststore"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,7 @@ import (
 func TestTaskRepository_Create(t *testing.T) {
 	s := teststore.New()
 	u := model.TestUser(t)
-	u.ID = 1
+	u.ID = uuid.New()
 	task := model.TestTask(t, u)
 	assert.NoError(t, s.Task().Create(task))
 	assert.NotNil(t, u)
@@ -22,15 +23,17 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 	taskRepo := s.Task()
 
 	u := model.TestUser(t)
-	u.ID = 1
+	u.ID = uuid.New()
 
 	task1 := model.TestTask(t, u)
 	task1.TaskText = "this is a completed task"
 	task1.IsDone = true
+	task1.TaskOrder = 0
 	taskRepo.Create(task1)
 
 	task2 := model.TestTask(t, u)
 	task2.IsDone = true
+	task2.TaskOrder = 1
 	taskRepo.Create(task2)
 
 	userTasks, err := taskRepo.GetAllByUser(u.ID)
@@ -71,7 +74,7 @@ func TestTaskRepository_MarkAsDone(t *testing.T) {
 	taskRepo := s.Task()
 
 	u := model.TestUser(t)
-	u.ID = 1
+	u.ID = uuid.New()
 	task := model.TestTask(t, u)
 
 	assert.NoError(t, taskRepo.Create(task))
@@ -89,7 +92,7 @@ func TestTaskRepository_MarkAsNotDone(t *testing.T) {
 	taskRepo := s.Task()
 
 	u := model.TestUser(t)
-	u.ID = 1
+	u.ID = uuid.New()
 	task := model.TestTask(t, u)
 	task.IsDone = true
 
@@ -108,7 +111,7 @@ func TestTaskRepository_Delete(t *testing.T) {
 	taskRepo := s.Task()
 
 	u := model.TestUser(t)
-	u.ID = 1
+	u.ID = uuid.New()
 	task := model.TestTask(t, u)
 	task.IsDone = true
 

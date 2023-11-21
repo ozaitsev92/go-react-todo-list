@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
 )
@@ -21,7 +22,8 @@ func (r *UserRepository) Create(u *model.User) error {
 	}
 
 	row := r.store.db.QueryRow(
-		"INSERT INTO users (email, encrypted_password) VALUES ($1, $2) RETURNING id;",
+		"INSERT INTO users (id, email, encrypted_password) VALUES ($1, $2, $3) RETURNING id;",
+		u.ID,
 		u.Email,
 		u.EncryptedPassword,
 	)
@@ -48,7 +50,7 @@ func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
 	return u, nil
 }
 
-func (r *UserRepository) Find(id int) (*model.User, error) {
+func (r *UserRepository) Find(id uuid.UUID) (*model.User, error) {
 	u := &model.User{}
 
 	row := r.store.db.QueryRow(

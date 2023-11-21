@@ -1,6 +1,7 @@
 package teststore
 
 import (
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
 )
@@ -20,7 +21,6 @@ func (r *UserRepository) Create(u *model.User) error {
 	}
 
 	r.users[u.Email] = u
-	u.ID = len(r.users)
 
 	return nil
 }
@@ -34,7 +34,7 @@ func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
 	return u, nil
 }
 
-func (r *UserRepository) Find(id int) (*model.User, error) {
+func (r *UserRepository) Find(id uuid.UUID) (*model.User, error) {
 	for _, u := range r.users {
 		if u.ID == id {
 			return u, nil

@@ -3,6 +3,7 @@ package sqlstore_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/sqlstore"
@@ -48,7 +49,7 @@ func TestUserRepository_Find(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	id := 1
+	id := uuid.New()
 
 	u, err := s.User().Find(id)
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())

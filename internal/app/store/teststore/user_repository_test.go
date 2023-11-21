@@ -3,6 +3,7 @@ package teststore_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/teststore"
@@ -38,13 +39,14 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 func TestUserRepository_Find(t *testing.T) {
 	s := teststore.New()
 
-	id := 1
+	id := uuid.New()
 
 	u, err := s.User().Find(id)
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
 	u = model.TestUser(t)
+	u.ID = id
 	s.User().Create(u)
 
 	u, err = s.User().Find(id)

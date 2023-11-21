@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
 )
@@ -16,8 +17,13 @@ func (r *TaskRepository) Create(t *model.Task) error {
 		return err
 	}
 
+	if err := t.BeforeCreate(); err != nil {
+		return err
+	}
+
 	row := r.store.db.QueryRow(
-		"INSERT INTO tasks (task_text, task_order, is_done, user_id) VALUES ($1, $2, $3, $4) RETURNING id;",
+		"INSERT INTO tasks (id, task_text, task_order, is_done, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
+		t.ID,
 		t.TaskText,
 		t.TaskOrder,
 		t.IsDone,
@@ -27,7 +33,7 @@ func (r *TaskRepository) Create(t *model.Task) error {
 	return row.Scan(&t.ID)
 }
 
-func (r *TaskRepository) GetAllByUser(UserID int) ([]*model.Task, error) {
+func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*model.Task, error) {
 	rows, err := r.store.db.Query(`
 		SELECT id, task_text, task_order, is_done, user_id
 		FROM tasks
@@ -53,7 +59,7 @@ func (r *TaskRepository) GetAllByUser(UserID int) ([]*model.Task, error) {
 	return tasks, nil
 }
 
-func (r *TaskRepository) MarkAsDone(TaskID int) (*model.Task, error) {
+func (r *TaskRepository) MarkAsDone(TaskID uuid.UUID) (*model.Task, error) {
 	_, err := r.store.db.Exec("UPDATE tasks SET is_done = true WHERE id = $1;", TaskID)
 	if err != nil {
 		return nil, err
@@ -77,7 +83,7 @@ func (r *TaskRepository) MarkAsDone(TaskID int) (*model.Task, error) {
 	return t, nil
 }
 
-func (r *TaskRepository) MarkAsNotDone(TaskID int) (*model.Task, error) {
+func (r *TaskRepository) MarkAsNotDone(TaskID uuid.UUID) (*model.Task, error) {
 	_, err := r.store.db.Exec("UPDATE tasks SET is_done = false WHERE id = $1;", TaskID)
 	if err != nil {
 		return nil, err
@@ -101,7 +107,7 @@ func (r *TaskRepository) MarkAsNotDone(TaskID int) (*model.Task, error) {
 	return t, nil
 }
 
-func (r *TaskRepository) Delete(TaskID int) error {
+func (r *TaskRepository) Delete(TaskID uuid.UUID) error {
 	_, err := r.store.db.Exec("DELETE FROM tasks WHERE id = $1;", TaskID)
 	if err != nil {
 		return err

@@ -12,8 +12,10 @@ func TestUser(t *testing.T) *User {
 
 func TestTask(t *testing.T, u *User) *Task {
 	task := &Task{
-		TaskText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-		UserID:   u.ID,
+		TaskText:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+		TaskOrder: 0,
+		IsDone:    false,
+		UserID:    u.ID,
 	}
 	return task
 }

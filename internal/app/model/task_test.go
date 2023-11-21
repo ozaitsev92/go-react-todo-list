@@ -3,13 +3,14 @@ package model_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTask_Validate(t *testing.T) {
 	u := model.TestUser(t)
-	u.ID = 1
+	u.ID = uuid.New()
 
 	testCases := []struct {
 		name    string
@@ -33,10 +34,10 @@ func TestTask_Validate(t *testing.T) {
 			isValid: false,
 		},
 		{
-			name: "task UserID is empty",
+			name: "task TaskOrder is invalid",
 			task: func() *model.Task {
 				task := model.TestTask(t, u)
-				task.UserID = 0
+				task.TaskOrder = -1
 				return task
 			},
 			isValid: false,
@@ -52,4 +53,13 @@ func TestTask_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTask_BeforeCreate(t *testing.T) {
+	u := model.TestUser(t)
+	u.ID = uuid.New()
+
+	task := model.TestTask(t, u)
+	assert.NoError(t, task.BeforeCreate())
+	assert.NotEmpty(t, task.ID)
 }
