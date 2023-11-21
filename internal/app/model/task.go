@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/google/uuid"
@@ -12,12 +14,23 @@ type Task struct {
 	TaskOrder int       `json:"order"`
 	IsDone    bool      `json:"is_done"`
 	UserID    uuid.UUID `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (t *Task) BeforeCreate() error {
 	if t.ID == uuid.Nil {
 		t.ID = uuid.New()
 	}
+
+	t.CreatedAt = time.Now()
+	t.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (t *Task) BeforeUpdate() error {
+	t.UpdatedAt = time.Now()
 
 	return nil
 }

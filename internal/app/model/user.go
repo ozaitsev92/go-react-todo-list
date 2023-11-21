@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/google/uuid"
@@ -12,6 +14,8 @@ type User struct {
 	Email             string    `json:"email"`
 	Password          string    `json:"password,omitempty"`
 	EncryptedPassword string    `json:"-"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 func (u *User) Validate() error {
@@ -35,6 +39,15 @@ func (u *User) BeforeCreate() error {
 	if u.ID == uuid.Nil {
 		u.ID = uuid.New()
 	}
+
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (u *User) BeforeUpdate() error {
+	u.UpdatedAt = time.Now()
 
 	return nil
 }
