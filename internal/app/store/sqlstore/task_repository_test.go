@@ -34,14 +34,14 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 	assert.NotNil(t, u)
 
 	task1 := model.TestTask(t, u)
-	task1.TaskOrder = 1
+	task1.TaskOrder = 0
 	task1.TaskText = "this is a first task"
 	task1.IsDone = true
 	assert.NoError(t, s.Task().Create(task1))
 	assert.NotNil(t, task1)
 
 	task2 := model.TestTask(t, u)
-	task2.TaskOrder = 0
+	task2.TaskOrder = 1
 	task2.TaskText = "this is a first task"
 	assert.NoError(t, s.Task().Create(task2))
 	assert.NotNil(t, task2)
@@ -50,17 +50,17 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, userTasks, 2)
 
-	assert.Equal(t, userTasks[0].ID, task2.ID)
-	assert.Equal(t, userTasks[0].TaskOrder, task2.TaskOrder)
-	assert.Equal(t, userTasks[0].TaskText, task2.TaskText)
-	assert.Equal(t, userTasks[0].UserID, task2.UserID)
-	assert.Equal(t, userTasks[0].IsDone, task2.IsDone)
+	assert.Equal(t, userTasks[0].ID, task1.ID)
+	assert.Equal(t, userTasks[0].TaskOrder, task1.TaskOrder)
+	assert.Equal(t, userTasks[0].TaskText, task1.TaskText)
+	assert.Equal(t, userTasks[0].UserID, task1.UserID)
+	assert.Equal(t, userTasks[0].IsDone, task1.IsDone)
 
-	assert.Equal(t, userTasks[1].ID, task1.ID)
-	assert.Equal(t, userTasks[1].TaskOrder, task1.TaskOrder)
-	assert.Equal(t, userTasks[1].TaskText, task1.TaskText)
-	assert.Equal(t, userTasks[1].UserID, task1.UserID)
-	assert.Equal(t, userTasks[1].IsDone, task1.IsDone)
+	assert.Equal(t, userTasks[1].ID, task2.ID)
+	assert.Equal(t, userTasks[1].TaskOrder, task2.TaskOrder)
+	assert.Equal(t, userTasks[1].TaskText, task2.TaskText)
+	assert.Equal(t, userTasks[1].UserID, task2.UserID)
+	assert.Equal(t, userTasks[1].IsDone, task2.IsDone)
 }
 
 func TestTaskRepository_MarkAsDone(t *testing.T) {

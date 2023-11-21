@@ -124,7 +124,7 @@ func TestServer_AuthenticateUser(t *testing.T) {
 		{
 			name: "authenticated",
 			cookieValue: map[interface{}]interface{}{
-				"user_id": u.ID,
+				"user_id": u.ID.String(),
 			},
 			expectedCode: http.StatusOK,
 		},

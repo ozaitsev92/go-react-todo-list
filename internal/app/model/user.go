@@ -3,15 +3,15 @@ package model
 import (
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TODO replace ID int with UUID
 type User struct {
-	ID                int    `json:"id"`
-	Email             string `json:"email"`
-	Password          string `json:"password,omitempty"`
-	EncryptedPassword string `json:"-"`
+	ID                uuid.UUID `json:"id"`
+	Email             string    `json:"email"`
+	Password          string    `json:"password,omitempty"`
+	EncryptedPassword string    `json:"-"`
 }
 
 func (u *User) Validate() error {
@@ -30,6 +30,10 @@ func (u *User) BeforeCreate() error {
 		}
 
 		u.EncryptedPassword = enc
+	}
+
+	if u.ID == uuid.Nil {
+		u.ID = uuid.New()
 	}
 
 	return nil

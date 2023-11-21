@@ -92,6 +92,7 @@ func TestUser_Validate(t *testing.T) {
 func TestUser_BeforeCreate(t *testing.T) {
 	u := model.TestUser(t)
 	assert.NoError(t, u.BeforeCreate())
+	assert.NotEmpty(t, u.ID)
 	assert.NotEmpty(t, u.EncryptedPassword)
 	assert.NotEqual(t, u.Password, u.EncryptedPassword)
 }

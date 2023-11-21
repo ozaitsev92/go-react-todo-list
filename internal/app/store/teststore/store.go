@@ -1,6 +1,7 @@
 package teststore
 
 import (
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
 )
@@ -29,7 +30,7 @@ func (s *Store) Task() store.TaskRepository {
 	if s.userRepository == nil {
 		s.taskRepository = &TaskRepository{
 			store: s,
-			tasks: make(map[int]*model.Task),
+			tasks: make(map[uuid.UUID]*model.Task),
 		}
 	}
 

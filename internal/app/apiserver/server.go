@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -62,13 +61,13 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods(http.MethodPost)
 	s.router.HandleFunc("/sessions", s.handleSessionsCreate()).Methods(http.MethodPost)
 
-	tasksSubRouter := s.router.PathPrefix("/users/{user_id:[0-9]+}/tasks").Subrouter()
+	tasksSubRouter := s.router.PathPrefix("/users/{user_id}/tasks").Subrouter()
 	tasksSubRouter.Use(s.authenticateUser)
 	tasksSubRouter.HandleFunc("/", s.handleTasksCreate()).Methods(http.MethodPost)
 	tasksSubRouter.HandleFunc("/", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
-	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}", s.handleTasksDelete()).Methods(http.MethodDelete)
-	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}/mark-done", s.handleTasksMarkAsDone()).Methods(http.MethodPut)
-	tasksSubRouter.HandleFunc("/{task_id:[0-9]+}/mark-not-done", s.handleTasksMarkAsNotDone()).Methods(http.MethodPut)
+	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksDelete()).Methods(http.MethodDelete)
+	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkAsDone()).Methods(http.MethodPut)
+	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkAsNotDone()).Methods(http.MethodPut)
 }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {
@@ -84,7 +83,12 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 			return
 		}
 
-		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
 		u := r.Context().Value(ctxKeyUser).(*model.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
@@ -108,7 +112,12 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 
 func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
 		u := r.Context().Value(ctxKeyUser).(*model.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
@@ -132,14 +141,23 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 
 func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
 		u := r.Context().Value(ctxKeyUser).(*model.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		TaskID, _ := strconv.Atoi(mux.Vars(r)["task_id"])
+		TaskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
 
 		t, err := s.store.Task().MarkAsDone(TaskID)
 		if err != nil {
@@ -158,14 +176,23 @@ func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
 
 func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
 		u := r.Context().Value(ctxKeyUser).(*model.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		TaskID, _ := strconv.Atoi(mux.Vars(r)["task_id"])
+		TaskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
 
 		t, err := s.store.Task().MarkAsNotDone(TaskID)
 		if err != nil {
@@ -184,14 +211,23 @@ func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
 
 func (s *server) handleTasksDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, _ := strconv.Atoi(mux.Vars(r)["user_id"])
+		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
 		u := r.Context().Value(ctxKeyUser).(*model.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		TaskID, _ := strconv.Atoi(mux.Vars(r)["task_id"])
+		TaskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
 
 		if err := s.store.Task().Delete(TaskID); err != nil {
 			if err == store.ErrRecordNotFound {
@@ -260,7 +296,7 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 			return
 		}
 
-		session.Values["user_id"] = u.ID
+		session.Values["user_id"] = u.ID.String()
 		if err := s.sessionStore.Save(r, w, session); err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
@@ -292,7 +328,13 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 			return
 		}
 
-		u, err := s.store.User().Find(id.(int))
+		UserID, err := uuid.Parse(id.(string))
+		if err != nil {
+			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			return
+		}
+
+		u, err := s.store.User().Find(UserID)
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
