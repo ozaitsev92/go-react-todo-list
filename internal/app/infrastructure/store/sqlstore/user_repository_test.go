@@ -1,24 +1,31 @@
-package teststore_test
+package sqlstore_test
 
 import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/teststore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUserRepository_Create(t *testing.T) {
-	s := teststore.New()
-	u := model.TestUser(t)
+	db, teardown := sqlstore.TestDB(t, databaseURL)
+	defer teardown("users")
+
+	s := sqlstore.New(db)
+
+	u := domain.TestUser(t)
 	assert.NoError(t, s.User().Create(u))
 	assert.NotNil(t, u)
 }
 
 func TestUserRepository_FindByEmail(t *testing.T) {
-	s := teststore.New()
+	db, teardown := sqlstore.TestDB(t, databaseURL)
+	defer teardown("users")
+
+	s := sqlstore.New(db)
 
 	email := "user@example.org"
 
@@ -26,7 +33,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
-	u = model.TestUser(t)
+	u = domain.TestUser(t)
 	u.Email = email
 	s.User().Create(u)
 
@@ -37,7 +44,10 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 }
 
 func TestUserRepository_Find(t *testing.T) {
-	s := teststore.New()
+	db, teardown := sqlstore.TestDB(t, databaseURL)
+	defer teardown("users")
+
+	s := sqlstore.New(db)
 
 	id := uuid.New()
 
@@ -45,9 +55,10 @@ func TestUserRepository_Find(t *testing.T) {
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
-	u = model.TestUser(t)
-	u.ID = id
+	u = domain.TestUser(t)
 	s.User().Create(u)
+
+	id = u.ID
 
 	u, err = s.User().Find(id)
 	assert.NoError(t, err)

@@ -1,9 +1,9 @@
-package app_test
+package helpers_test
 
 import (
 	"testing"
 
-	"github.com/ozaitsev92/go-react-todo-list/internal/app"
+	"github.com/ozaitsev92/go-react-todo-list/internal/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +32,7 @@ func TestRandomString(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Len(t, app.RandomString(tc.length), tc.length)
+			assert.Len(t, helpers.RandomString(tc.length), tc.length)
 		})
 	}
 }

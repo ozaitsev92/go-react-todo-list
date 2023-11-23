@@ -4,15 +4,15 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
 )
 
 type TaskRepository struct {
 	store *Store
 }
 
-func (r *TaskRepository) Create(t *model.Task) error {
+func (r *TaskRepository) Create(t *domain.Task) error {
 	if err := t.Validate(); err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (r *TaskRepository) Create(t *model.Task) error {
 	return row.Scan(&t.ID)
 }
 
-func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*model.Task, error) {
+func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*domain.Task, error) {
 	rows, err := r.store.db.Query(`
 		SELECT id, task_text, task_order, is_done, user_id
 		FROM tasks
@@ -48,9 +48,9 @@ func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*model.Task, error) {
 	}
 	defer rows.Close()
 
-	tasks := []*model.Task{}
+	tasks := []*domain.Task{}
 	for rows.Next() {
-		t := &model.Task{}
+		t := &domain.Task{}
 		err := rows.Scan(&t.ID, &t.TaskText, &t.TaskOrder, &t.IsDone, &t.UserID)
 		if err != nil {
 			return nil, err
@@ -61,8 +61,8 @@ func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*model.Task, error) {
 	return tasks, nil
 }
 
-func (r *TaskRepository) MarkAsDone(TaskID uuid.UUID) (*model.Task, error) {
-	t := &model.Task{}
+func (r *TaskRepository) MarkAsDone(TaskID uuid.UUID) (*domain.Task, error) {
+	t := &domain.Task{}
 
 	row := r.store.db.QueryRow(
 		"SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at FROM tasks WHERE id = $1;",
@@ -89,8 +89,8 @@ func (r *TaskRepository) MarkAsDone(TaskID uuid.UUID) (*model.Task, error) {
 	return t, nil
 }
 
-func (r *TaskRepository) MarkAsNotDone(TaskID uuid.UUID) (*model.Task, error) {
-	t := &model.Task{}
+func (r *TaskRepository) MarkAsNotDone(TaskID uuid.UUID) (*domain.Task, error) {
+	t := &domain.Task{}
 
 	row := r.store.db.QueryRow(
 		"SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at FROM tasks WHERE id = $1;",
