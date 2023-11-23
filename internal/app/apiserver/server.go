@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
 	"github.com/sirupsen/logrus"
 )
 
@@ -89,13 +89,13 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*model.User)
+		u := r.Context().Value(ctxKeyUser).(*domain.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		t := &model.Task{
+		t := &domain.Task{
 			TaskText:  req.TaskText,
 			TaskOrder: req.TaskOrder,
 			UserID:    UserID,
@@ -118,7 +118,7 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*model.User)
+		u := r.Context().Value(ctxKeyUser).(*domain.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -147,7 +147,7 @@ func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*model.User)
+		u := r.Context().Value(ctxKeyUser).(*domain.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -182,7 +182,7 @@ func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*model.User)
+		u := r.Context().Value(ctxKeyUser).(*domain.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -217,7 +217,7 @@ func (s *server) handleTasksDelete() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*model.User)
+		u := r.Context().Value(ctxKeyUser).(*domain.User)
 		if u.ID != UserID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -256,7 +256,7 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 			return
 		}
 
-		u := &model.User{
+		u := &domain.User{
 			Email:    req.Email,
 			Password: req.Password,
 		}
@@ -376,3 +376,48 @@ func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 		json.NewEncoder(w).Encode(data)
 	}
 }
+
+// // INFRASTRUCTURE LAYER //
+
+// type PostgreSQLTaskRepository struct{}
+
+// func NewPostgreSQLTaskRepository() *PostgreSQLTaskRepository {
+// 	return &PostgreSQLTaskRepository{}
+// }
+
+// func (r *PostgreSQLTaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*Task, error) {
+// 	return &Task{}, nil
+// }
+
+// func (r *PostgreSQLTaskRepository) SaveTask(ctx context.Context, task *Task) error {
+// 	return nil
+// }
+
+// func (r *PostgreSQLTaskRepository) DeleteTask(ctx context.Context, task *Task) error {
+// 	return nil
+// }
+
+// // APP LAYER //
+// func tCreateTask() {
+// 	s := NewTaskService(NewPostgreSQLTaskRepository())
+
+// 	r := &CreateTaskRequest{
+// 		TaskText:  "Test",
+// 		TaskOrder: 1,
+// 		UserID:    uuid.New(),
+// 	}
+
+// 	if t, err := s.CreateTask(context.Background(), r); err != nil {
+// 		fmt.Println(err)
+// 	} else {
+// 		fmt.Println(t)
+
+// 		r := &DeleteTaskRequest{
+// 			ID: t.id,
+// 		}
+
+// 		if err := s.DeleteTask(context.Background(), r); err != nil {
+// 			fmt.Println(err)
+// 		}
+// 	}
+// }

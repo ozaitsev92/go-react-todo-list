@@ -10,8 +10,8 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/teststore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/teststore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,7 +61,7 @@ func TestServer_HandleUsersCreate(t *testing.T) {
 }
 
 func TestServer_HandleSessionsCreate(t *testing.T) {
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 
 	store := teststore.New()
 	store.User().Create(u)
@@ -111,7 +111,7 @@ func TestServer_HandleSessionsCreate(t *testing.T) {
 }
 
 func TestServer_AuthenticateUser(t *testing.T) {
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 
 	store := teststore.New()
 	store.User().Create(u)

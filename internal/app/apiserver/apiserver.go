@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/sqlstore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
 )
 
 func Start(config *Config) {

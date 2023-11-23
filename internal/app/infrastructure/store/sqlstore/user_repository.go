@@ -4,15 +4,15 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
 )
 
 type UserRepository struct {
 	store *Store
 }
 
-func (r *UserRepository) Create(u *model.User) error {
+func (r *UserRepository) Create(u *domain.User) error {
 	if err := u.Validate(); err != nil {
 		return err
 	}
@@ -33,8 +33,8 @@ func (r *UserRepository) Create(u *model.User) error {
 	return row.Scan(&u.ID)
 }
 
-func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
-	u := &model.User{}
+func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
+	u := &domain.User{}
 
 	row := r.store.db.QueryRow(
 		"SELECT id, email, encrypted_password FROM users WHERE email = $1;",
@@ -52,8 +52,8 @@ func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
 	return u, nil
 }
 
-func (r *UserRepository) Find(id uuid.UUID) (*model.User, error) {
-	u := &model.User{}
+func (r *UserRepository) Find(id uuid.UUID) (*domain.User, error) {
+	u := &domain.User{}
 
 	row := r.store.db.QueryRow(
 		"SELECT id, email, encrypted_password FROM users WHERE id = $1;",

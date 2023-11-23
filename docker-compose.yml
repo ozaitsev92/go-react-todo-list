@@ -1,9 +1,7 @@
-version: '3.1'
-
+version: "3.9"
 services:
-
-  db:
-    container_name: db
+  postgres:
+    container_name: postgres
     image: postgres
     restart: always
     ports:
@@ -12,3 +10,20 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: todo_db
+    networks:
+      - goapp_network
+
+  goapp:
+    container_name: goapp
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - goapp_network
+
+networks:
+  goapp_network:

@@ -3,8 +3,8 @@ package sqlstore_test
 import (
 	"testing"
 
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/model"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/store/sqlstore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,11 +14,11 @@ func TestTaskRepository_Create(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 	assert.NoError(t, s.User().Create(u))
 	assert.NotNil(t, u)
 
-	task := model.TestTask(t, u)
+	task := domain.TestTask(t, u)
 	assert.NoError(t, s.Task().Create(task))
 	assert.NotNil(t, task)
 }
@@ -29,18 +29,18 @@ func TestTaskRepository_GetAllByUser(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 	assert.NoError(t, s.User().Create(u))
 	assert.NotNil(t, u)
 
-	task1 := model.TestTask(t, u)
+	task1 := domain.TestTask(t, u)
 	task1.TaskOrder = 0
 	task1.TaskText = "this is a first task"
 	task1.IsDone = true
 	assert.NoError(t, s.Task().Create(task1))
 	assert.NotNil(t, task1)
 
-	task2 := model.TestTask(t, u)
+	task2 := domain.TestTask(t, u)
 	task2.TaskOrder = 1
 	task2.TaskText = "this is a first task"
 	assert.NoError(t, s.Task().Create(task2))
@@ -69,11 +69,11 @@ func TestTaskRepository_MarkAsDone(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 	assert.NoError(t, s.User().Create(u))
 	assert.NotNil(t, u)
 
-	task := model.TestTask(t, u)
+	task := domain.TestTask(t, u)
 	assert.NoError(t, s.Task().Create(task))
 	assert.NotNil(t, task)
 	assert.False(t, task.IsDone)
@@ -90,11 +90,11 @@ func TestTaskRepository_MarkAsNotDone(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 	assert.NoError(t, s.User().Create(u))
 	assert.NotNil(t, u)
 
-	task := model.TestTask(t, u)
+	task := domain.TestTask(t, u)
 	task.IsDone = true
 	assert.NoError(t, s.Task().Create(task))
 	assert.NotNil(t, task)
@@ -112,11 +112,11 @@ func TestTaskRepository_Delete(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := model.TestUser(t)
+	u := domain.TestUser(t)
 	assert.NoError(t, s.User().Create(u))
 	assert.NotNil(t, u)
 
-	task := model.TestTask(t, u)
+	task := domain.TestTask(t, u)
 	task.IsDone = true
 	assert.NoError(t, s.Task().Create(task))
 	assert.NotNil(t, task)
