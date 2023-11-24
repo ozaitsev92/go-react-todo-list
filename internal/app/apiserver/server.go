@@ -66,8 +66,8 @@ func (s *server) configureRouter() {
 	tasksSubRouter.HandleFunc("/", s.handleTasksCreate()).Methods(http.MethodPost)
 	tasksSubRouter.HandleFunc("/", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
 	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksDelete()).Methods(http.MethodDelete)
-	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkAsDone()).Methods(http.MethodPut)
-	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkAsNotDone()).Methods(http.MethodPut)
+	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkDone()).Methods(http.MethodPut)
+	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).Methods(http.MethodPut)
 }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {
@@ -76,6 +76,8 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 		TaskOrder int    `json:"task_order"`
 	}
 
+	service := domain.NewTaskService(s.store.Task())
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -83,48 +85,49 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 			return
 		}
 
-		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
 		u := r.Context().Value(ctxKeyUser).(*domain.User)
-		if u.ID != UserID {
+		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		t := &domain.Task{
+		task, err := service.CreateTask(r.Context(), &domain.CreateTaskRequest{
 			TaskText:  req.TaskText,
 			TaskOrder: req.TaskOrder,
-			UserID:    UserID,
-		}
-
-		if err := s.store.Task().Create(t); err != nil {
+			UserID:    userID,
+		})
+		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, t)
+		s.respond(w, r, http.StatusCreated, domain.TaskToResponse(*task))
 	}
 }
 
 func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
+	service := domain.NewTaskService(s.store.Task())
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
 		u := r.Context().Value(ctxKeyUser).(*domain.User)
-		if u.ID != UserID {
+		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		userTasks, err := s.store.Task().GetAllByUser(UserID)
+		userTasks, err := service.GetAllByUser(r.Context(), &domain.GetTasksByUserRequest{UserID: userID})
 		if err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
@@ -135,31 +138,38 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, userTasks)
+		var resp []domain.TaskResponse
+		for _, t := range userTasks {
+			resp = append(resp, domain.TaskToResponse(*t))
+		}
+
+		s.respond(w, r, http.StatusCreated, resp)
 	}
 }
 
-func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
+func (s *server) handleTasksMarkDone() http.HandlerFunc {
+	service := domain.NewTaskService(s.store.Task())
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
 		u := r.Context().Value(ctxKeyUser).(*domain.User)
-		if u.ID != UserID {
+		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		TaskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		taskID, err := uuid.Parse(mux.Vars(r)["task_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		t, err := s.store.Task().MarkAsDone(TaskID)
+		t, err := service.MarkTaskDone(r.Context(), &domain.MarkTaskDoneRequest{ID: taskID})
 		if err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
@@ -170,31 +180,33 @@ func (s *server) handleTasksMarkAsDone() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, t)
+		s.respond(w, r, http.StatusCreated, domain.TaskToResponse(*t))
 	}
 }
 
-func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
+func (s *server) handleTasksMarkNotDone() http.HandlerFunc {
+	service := domain.NewTaskService(s.store.Task())
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
 		u := r.Context().Value(ctxKeyUser).(*domain.User)
-		if u.ID != UserID {
+		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		TaskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		taskID, err := uuid.Parse(mux.Vars(r)["task_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		t, err := s.store.Task().MarkAsNotDone(TaskID)
+		t, err := service.MarkTaskNotDone(r.Context(), &domain.MarkTaskNotDoneRequest{ID: taskID})
 		if err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
@@ -205,31 +217,33 @@ func (s *server) handleTasksMarkAsNotDone() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, t)
+		s.respond(w, r, http.StatusCreated, domain.TaskToResponse(*t))
 	}
 }
 
 func (s *server) handleTasksDelete() http.HandlerFunc {
+	service := domain.NewTaskService(s.store.Task())
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		UserID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
 		u := r.Context().Value(ctxKeyUser).(*domain.User)
-		if u.ID != UserID {
+		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		TaskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		taskID, err := uuid.Parse(mux.Vars(r)["task_id"])
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		if err := s.store.Task().Delete(TaskID); err != nil {
+		if err := service.DeleteTask(r.Context(), &domain.DeleteTaskRequest{ID: taskID}); err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
 			} else {
@@ -249,6 +263,8 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 		Password string `json:"password"`
 	}
 
+	service := domain.NewUserService(s.store.User())
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -256,18 +272,16 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 			return
 		}
 
-		u := &domain.User{
+		u, err := service.CreateUser(r.Context(), &domain.CreateUserRequest{
 			Email:    req.Email,
 			Password: req.Password,
-		}
-
-		if err := s.store.User().Create(u); err != nil {
+		})
+		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
 
-		u.Sanitize()
-		s.respond(w, r, http.StatusCreated, u)
+		s.respond(w, r, http.StatusCreated, domain.UserToResponse(*u))
 	}
 }
 
@@ -277,6 +291,8 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 		Password string `json:"password"`
 	}
 
+	service := domain.NewUserService(s.store.User())
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -284,8 +300,12 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 			return
 		}
 
-		u, err := s.store.User().FindByEmail(req.Email)
-		if err != nil || !u.ComparePassword(req.Password) {
+		u, err := service.AuthenticateUser(r.Context(), &domain.AuthenticateUserRequest{
+			Email:    req.Email,
+			Password: req.Password,
+		})
+
+		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
 			return
 		}
@@ -296,7 +316,7 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 			return
 		}
 
-		session.Values["user_id"] = u.ID.String()
+		session.Values["user_id"] = u.GetID().String()
 		if err := s.sessionStore.Save(r, w, session); err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
@@ -315,6 +335,8 @@ func (s *server) setRequestID(next http.Handler) http.Handler {
 }
 
 func (s *server) authenticateUser(next http.Handler) http.Handler {
+	service := domain.NewUserService(s.store.User())
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := s.sessionStore.Get(r, sessionName)
 		if err != nil {
@@ -328,13 +350,13 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 			return
 		}
 
-		UserID, err := uuid.Parse(id.(string))
+		userID, err := uuid.Parse(id.(string))
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
 
-		u, err := s.store.User().Find(UserID)
+		u, err := service.FindUserByID(r.Context(), &domain.FindUserByIDRequest{ID: userID})
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
@@ -376,48 +398,3 @@ func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 		json.NewEncoder(w).Encode(data)
 	}
 }
-
-// // INFRASTRUCTURE LAYER //
-
-// type PostgreSQLTaskRepository struct{}
-
-// func NewPostgreSQLTaskRepository() *PostgreSQLTaskRepository {
-// 	return &PostgreSQLTaskRepository{}
-// }
-
-// func (r *PostgreSQLTaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*Task, error) {
-// 	return &Task{}, nil
-// }
-
-// func (r *PostgreSQLTaskRepository) SaveTask(ctx context.Context, task *Task) error {
-// 	return nil
-// }
-
-// func (r *PostgreSQLTaskRepository) DeleteTask(ctx context.Context, task *Task) error {
-// 	return nil
-// }
-
-// // APP LAYER //
-// func tCreateTask() {
-// 	s := NewTaskService(NewPostgreSQLTaskRepository())
-
-// 	r := &CreateTaskRequest{
-// 		TaskText:  "Test",
-// 		TaskOrder: 1,
-// 		UserID:    uuid.New(),
-// 	}
-
-// 	if t, err := s.CreateTask(context.Background(), r); err != nil {
-// 		fmt.Println(err)
-// 	} else {
-// 		fmt.Println(t)
-
-// 		r := &DeleteTaskRequest{
-// 			ID: t.id,
-// 		}
-
-// 		if err := s.DeleteTask(context.Background(), r); err != nil {
-// 			fmt.Println(err)
-// 		}
-// 	}
-// }

@@ -42,14 +42,14 @@ func (ts *UserService) AuthenticateUser(ctx context.Context, r *AuthenticateUser
 		return nil, errIncorrectEmailOrPassword
 	}
 
-	if !u.ComparePassword(u.password) {
+	if !u.ComparePassword(r.Password) {
 		return nil, errIncorrectEmailOrPassword
 	}
 
 	return u, nil
 }
 
-func (ts *UserService) FindUserBy(ctx context.Context, r *FindUserByIDRequest) (*User, error) {
+func (ts *UserService) FindUserByID(ctx context.Context, r *FindUserByIDRequest) (*User, error) {
 	u, err := ts.userRepository.FindByID(ctx, r.ID)
 	if err != nil {
 		return nil, err

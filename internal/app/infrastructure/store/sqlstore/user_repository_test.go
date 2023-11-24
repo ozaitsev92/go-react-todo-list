@@ -1,6 +1,7 @@
 package sqlstore_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -16,8 +17,8 @@ func TestUserRepository_Create(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t)
-	assert.NoError(t, s.User().Create(u))
+	u := domain.TestUser(t, "example@email.com", "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 }
 
@@ -29,18 +30,17 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 
 	email := "user@example.org"
 
-	u, err := s.User().FindByEmail(email)
+	u, err := s.User().FindByEmail(context.Background(), email)
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
-	u = domain.TestUser(t)
-	u.Email = email
-	s.User().Create(u)
+	u = domain.TestUser(t, email, "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 
-	u, err = s.User().FindByEmail(email)
+	u, err = s.User().FindByEmail(context.Background(), email)
 	assert.NoError(t, err)
 	assert.NotNil(t, u)
-	assert.Equal(t, email, u.Email)
+	assert.Equal(t, email, u.GetEmail())
 }
 
 func TestUserRepository_Find(t *testing.T) {
@@ -51,17 +51,17 @@ func TestUserRepository_Find(t *testing.T) {
 
 	id := uuid.New()
 
-	u, err := s.User().Find(id)
+	u, err := s.User().FindByID(context.Background(), id)
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
-	u = domain.TestUser(t)
-	s.User().Create(u)
+	u = domain.TestUser(t, "example@email.com", "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 
-	id = u.ID
+	id = u.GetID()
 
-	u, err = s.User().Find(id)
+	u, err = s.User().FindByID(context.Background(), id)
 	assert.NoError(t, err)
 	assert.NotNil(t, u)
-	assert.Equal(t, id, u.ID)
+	assert.Equal(t, id, u.GetID())
 }

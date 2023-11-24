@@ -1,47 +1,100 @@
 package sqlstore
 
 import (
-	"database/sql"
+	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
 )
 
 type TaskRepository struct {
 	store *Store
 }
 
-func (r *TaskRepository) Create(t *domain.Task) error {
-	if err := t.Validate(); err != nil {
-		return err
-	}
-
-	if err := t.BeforeCreate(); err != nil {
-		return err
-	}
-
-	row := r.store.db.QueryRow(
-		"INSERT INTO tasks (id, task_text, task_order, is_done, user_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;",
-		t.ID,
-		t.TaskText,
-		t.TaskOrder,
-		t.IsDone,
-		t.UserID,
-		t.CreatedAt,
-		t.UpdatedAt,
-	)
-
-	return row.Scan(&t.ID)
+type DBTaskRecord struct {
+	ID        uuid.UUID
+	TaskText  string
+	TaskOrder int
+	IsDone    bool
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
-func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*domain.Task, error) {
+func (r *DBTaskRecord) ToTask() *domain.Task {
+	t := &domain.Task{}
+
+	t.SetID(r.ID)
+	t.SetTaskText(r.TaskText)
+	t.SetTaskOrder(r.TaskOrder)
+	t.SetIsDone(r.IsDone)
+	t.SetUserID(r.UserID)
+	t.SetCreatedAt(r.CreatedAt)
+	t.SetUpdatedAt(r.UpdatedAt)
+
+	return t
+}
+
+func (r *TaskRepository) SaveTask(ctx context.Context, task *domain.Task) error {
+	_, err := r.store.db.Exec(
+		`
+			INSERT INTO tasks (id, task_text, task_order, is_done, user_id, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			ON CONFLICT(id) DO UPDATE
+			SET task_text = EXCLUDED.task_text,
+				task_order = EXCLUDED.task_order,
+				is_done = EXCLUDED.is_done,
+				updated_at = EXCLUDED.updated_at;
+		`,
+		task.GetID(),
+		task.GetTaskText(),
+		task.GetTaskOrder(),
+		task.GetIsDone(),
+		task.GetUserID(),
+		task.GetCreatedAt(),
+		task.GetUpdatedAt(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *TaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Task, error) {
+	row := r.store.db.QueryRow(`
+		SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at
+		FROM tasks
+		WHERE id = $1;
+	`, id)
+
+	rec := &DBTaskRecord{}
+	err := row.Scan(
+		&rec.ID,
+		&rec.TaskText,
+		&rec.TaskOrder,
+		&rec.IsDone,
+		&rec.UserID,
+		&rec.CreatedAt,
+		&rec.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rec.ToTask(), nil
+}
+
+func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Task, error) {
 	rows, err := r.store.db.Query(`
-		SELECT id, task_text, task_order, is_done, user_id
+		SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at
 		FROM tasks
 		WHERE user_id = $1
 		ORDER BY task_order ASC;
-	`, UserID)
+	`, userID)
 
 	if err != nil {
 		return nil, err
@@ -50,75 +103,29 @@ func (r *TaskRepository) GetAllByUser(UserID uuid.UUID) ([]*domain.Task, error) 
 
 	tasks := []*domain.Task{}
 	for rows.Next() {
-		t := &domain.Task{}
-		err := rows.Scan(&t.ID, &t.TaskText, &t.TaskOrder, &t.IsDone, &t.UserID)
+		rec := &DBTaskRecord{}
+		err := rows.Scan(
+			&rec.ID,
+			&rec.TaskText,
+			&rec.TaskOrder,
+			&rec.IsDone,
+			&rec.UserID,
+			&rec.CreatedAt,
+			&rec.UpdatedAt,
+		)
+
 		if err != nil {
 			return nil, err
 		}
-		tasks = append(tasks, t)
+
+		tasks = append(tasks, rec.ToTask())
 	}
 
 	return tasks, nil
 }
 
-func (r *TaskRepository) MarkAsDone(TaskID uuid.UUID) (*domain.Task, error) {
-	t := &domain.Task{}
-
-	row := r.store.db.QueryRow(
-		"SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at FROM tasks WHERE id = $1;",
-		TaskID,
-	)
-
-	if err := row.Scan(&t.ID, &t.TaskText, &t.TaskOrder, &t.IsDone, &t.UserID, &t.CreatedAt, &t.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, store.ErrRecordNotFound
-		}
-
-		return nil, err
-	}
-
-	//TODO refactor
-	t.IsDone = true
-	t.BeforeUpdate()
-
-	_, err := r.store.db.Exec("UPDATE tasks SET is_done = $2, updated_at = $3 WHERE id = $1;", TaskID, t.IsDone, t.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
-}
-
-func (r *TaskRepository) MarkAsNotDone(TaskID uuid.UUID) (*domain.Task, error) {
-	t := &domain.Task{}
-
-	row := r.store.db.QueryRow(
-		"SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at FROM tasks WHERE id = $1;",
-		TaskID,
-	)
-
-	if err := row.Scan(&t.ID, &t.TaskText, &t.TaskOrder, &t.IsDone, &t.UserID, &t.CreatedAt, &t.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, store.ErrRecordNotFound
-		}
-
-		return nil, err
-	}
-
-	//TODO refactor
-	t.IsDone = false
-	t.BeforeUpdate()
-
-	_, err := r.store.db.Exec("UPDATE tasks SET is_done = $2, updated_at = $3 WHERE id = $1;", TaskID, t.IsDone, t.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
-}
-
-func (r *TaskRepository) Delete(TaskID uuid.UUID) error {
-	_, err := r.store.db.Exec("DELETE FROM tasks WHERE id = $1;", TaskID)
+func (r *TaskRepository) DeleteTask(ctx context.Context, task *domain.Task) error {
+	_, err := r.store.db.Exec("DELETE FROM tasks WHERE id = $1;", task.GetID())
 	if err != nil {
 		return err
 	}

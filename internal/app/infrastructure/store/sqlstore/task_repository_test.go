@@ -1,6 +1,7 @@
 package sqlstore_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
@@ -14,96 +15,68 @@ func TestTaskRepository_Create(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t)
-	assert.NoError(t, s.User().Create(u))
+	u := domain.TestUser(t, "example@email.com", "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task := domain.TestTask(t, u)
-	assert.NoError(t, s.Task().Create(task))
+	task := domain.TestTask(t, "this is a first task", 0, false, u.GetID())
+	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
 }
 
-func TestTaskRepository_GetAllByUser(t *testing.T) {
+func TestTaskRepository_FindByID(t *testing.T) {
 	db, teardown := sqlstore.TestDB(t, databaseURL)
 	defer teardown("users", "tasks")
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t)
-	assert.NoError(t, s.User().Create(u))
+	u := domain.TestUser(t, "example@email.com", "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task1 := domain.TestTask(t, u)
-	task1.TaskOrder = 0
-	task1.TaskText = "this is a first task"
-	task1.IsDone = true
-	assert.NoError(t, s.Task().Create(task1))
+	task := domain.TestTask(t, "this is a first task", 0, true, u.GetID())
+	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
+	assert.NotNil(t, task)
+
+	foundTask, err := s.Task().FindByID(context.Background(), task.GetID())
+	assert.NoError(t, err)
+	assert.NotNil(t, foundTask)
+	assert.Equal(t, task.GetID(), foundTask.GetID())
+}
+
+func TestTaskRepository_GetAllByUserID(t *testing.T) {
+	db, teardown := sqlstore.TestDB(t, databaseURL)
+	defer teardown("users", "tasks")
+
+	s := sqlstore.New(db)
+
+	u := domain.TestUser(t, "example@email.com", "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
+	assert.NotNil(t, u)
+
+	task1 := domain.TestTask(t, "this is a first task", 0, true, u.GetID())
+	assert.NoError(t, s.Task().SaveTask(context.Background(), task1))
 	assert.NotNil(t, task1)
 
-	task2 := domain.TestTask(t, u)
-	task2.TaskOrder = 1
-	task2.TaskText = "this is a first task"
-	assert.NoError(t, s.Task().Create(task2))
+	task2 := domain.TestTask(t, "this is a second task", 1, true, u.GetID())
+	assert.NoError(t, s.Task().SaveTask(context.Background(), task2))
 	assert.NotNil(t, task2)
 
-	userTasks, err := s.Task().GetAllByUser(u.ID)
+	userTasks, err := s.Task().GetAllByUserID(context.Background(), u.GetID())
 	assert.NoError(t, err)
 	assert.Len(t, userTasks, 2)
 
-	assert.Equal(t, userTasks[0].ID, task1.ID)
-	assert.Equal(t, userTasks[0].TaskOrder, task1.TaskOrder)
-	assert.Equal(t, userTasks[0].TaskText, task1.TaskText)
-	assert.Equal(t, userTasks[0].UserID, task1.UserID)
-	assert.Equal(t, userTasks[0].IsDone, task1.IsDone)
+	assert.Equal(t, userTasks[0].GetID(), task1.GetID())
+	assert.Equal(t, userTasks[0].GetTaskOrder(), task1.GetTaskOrder())
+	assert.Equal(t, userTasks[0].GetTaskText(), task1.GetTaskText())
+	assert.Equal(t, userTasks[0].GetUserID(), task1.GetUserID())
+	assert.Equal(t, userTasks[0].GetIsDone(), task1.GetIsDone())
 
-	assert.Equal(t, userTasks[1].ID, task2.ID)
-	assert.Equal(t, userTasks[1].TaskOrder, task2.TaskOrder)
-	assert.Equal(t, userTasks[1].TaskText, task2.TaskText)
-	assert.Equal(t, userTasks[1].UserID, task2.UserID)
-	assert.Equal(t, userTasks[1].IsDone, task2.IsDone)
-}
-
-func TestTaskRepository_MarkAsDone(t *testing.T) {
-	db, teardown := sqlstore.TestDB(t, databaseURL)
-	defer teardown("users", "tasks")
-
-	s := sqlstore.New(db)
-
-	u := domain.TestUser(t)
-	assert.NoError(t, s.User().Create(u))
-	assert.NotNil(t, u)
-
-	task := domain.TestTask(t, u)
-	assert.NoError(t, s.Task().Create(task))
-	assert.NotNil(t, task)
-	assert.False(t, task.IsDone)
-
-	task, err := s.Task().MarkAsDone(task.ID)
-	assert.NoError(t, err)
-	assert.NotNil(t, task)
-	assert.True(t, task.IsDone)
-}
-
-func TestTaskRepository_MarkAsNotDone(t *testing.T) {
-	db, teardown := sqlstore.TestDB(t, databaseURL)
-	defer teardown("users", "tasks")
-
-	s := sqlstore.New(db)
-
-	u := domain.TestUser(t)
-	assert.NoError(t, s.User().Create(u))
-	assert.NotNil(t, u)
-
-	task := domain.TestTask(t, u)
-	task.IsDone = true
-	assert.NoError(t, s.Task().Create(task))
-	assert.NotNil(t, task)
-	assert.True(t, task.IsDone)
-
-	task, err := s.Task().MarkAsNotDone(task.ID)
-	assert.NoError(t, err)
-	assert.NotNil(t, task)
-	assert.False(t, task.IsDone)
+	assert.Equal(t, userTasks[1].GetID(), task2.GetID())
+	assert.Equal(t, userTasks[1].GetTaskOrder(), task2.GetTaskOrder())
+	assert.Equal(t, userTasks[1].GetTaskText(), task2.GetTaskText())
+	assert.Equal(t, userTasks[1].GetUserID(), task2.GetUserID())
+	assert.Equal(t, userTasks[1].GetIsDone(), task2.GetIsDone())
 }
 
 func TestTaskRepository_Delete(t *testing.T) {
@@ -112,20 +85,19 @@ func TestTaskRepository_Delete(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t)
-	assert.NoError(t, s.User().Create(u))
+	u := domain.TestUser(t, "example@email.com", "a password")
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task := domain.TestTask(t, u)
-	task.IsDone = true
-	assert.NoError(t, s.Task().Create(task))
+	task := domain.TestTask(t, "text", 0, true, u.GetID())
+	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
-	assert.True(t, task.IsDone)
+	assert.True(t, task.GetIsDone())
 
-	err := s.Task().Delete(task.ID)
+	err := s.Task().DeleteTask(context.Background(), task)
 	assert.NoError(t, err)
 
-	userTasks, err := s.Task().GetAllByUser(u.ID)
+	userTasks, err := s.Task().GetAllByUserID(context.Background(), u.GetID())
 	assert.NoError(t, err)
 	assert.Len(t, userTasks, 0)
 }
