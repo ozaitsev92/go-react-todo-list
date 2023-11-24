@@ -93,14 +93,14 @@ func TestUserService_AuthenticateUser(t *testing.T) {
 		pwd             string
 		isAuthenticated bool
 	}{
-		// {
-		// 	name: "is authenticated",
-		// 	u: func() *domain.User {
-		// 		return domain.TestUser(t, "example@email.com", "a password")
-		// 	},
-		// 	pwd:             "a password",
-		// 	isAuthenticated: true,
-		// },
+		{
+			name: "is authenticated",
+			u: func() *domain.User {
+				return domain.TestUser(t, "example@email.com", "a password")
+			},
+			pwd:             "a password",
+			isAuthenticated: true,
+		},
 		{
 			name: "incorrect password",
 			u: func() *domain.User {
