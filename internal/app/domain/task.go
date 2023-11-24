@@ -42,40 +42,93 @@ func (t *Task) GetID() uuid.UUID {
 	return t.id
 }
 
+func (t *Task) SetID(id uuid.UUID) error {
+	t.id = id
+	return nil
+}
+
 func (t *Task) GetTaskText() string {
 	return t.taskText
+}
+
+func (t *Task) SetTaskText(taskText string) error {
+	err := validation.Validate(taskText, validation.Required, validation.Length(1, 255))
+	if err != nil {
+		return err
+	}
+	t.taskText = taskText
+	return nil
 }
 
 func (t *Task) GetTaskOrder() int {
 	return t.taskOrder
 }
 
+func (t *Task) SetTaskOrder(taskOrder int) error {
+	err := validation.Validate(taskOrder, validation.Min(0))
+	if err != nil {
+		return err
+	}
+	t.taskOrder = taskOrder
+	return nil
+}
+
 func (t *Task) GetIsDone() bool {
 	return t.isDone
+}
+
+func (t *Task) SetIsDone(isDone bool) error {
+	t.isDone = isDone
+	return nil
 }
 
 func (t *Task) GetUserID() uuid.UUID {
 	return t.userID
 }
 
+func (t *Task) SetUserID(userID uuid.UUID) error {
+	t.userID = userID
+	return nil
+}
+
 func (t *Task) GetCreatedAt() time.Time {
 	return t.createdAt
+}
+
+func (t *Task) SetCreatedAt(createdAt time.Time) error {
+	err := validation.Validate(createdAt, validation.By(timeNotZero))
+	if err != nil {
+		return err
+	}
+
+	t.createdAt = createdAt
+	return nil
 }
 
 func (t *Task) GetUpdatedAt() time.Time {
 	return t.updatedAt
 }
 
+func (t *Task) SetUpdatedAt(updatedAt time.Time) error {
+	err := validation.Validate(updatedAt, validation.By(timeNotZero))
+	if err != nil {
+		return err
+	}
+
+	t.updatedAt = updatedAt
+	return nil
+}
+
 func (t *Task) MarkDone() {
-	t.isDone = true
+	t.SetIsDone(true)
 }
 
 func (t *Task) MarkNotDone() {
-	t.isDone = false
+	t.SetIsDone(false)
 }
 
 func (t *Task) BeforeUpdate() error {
-	t.updatedAt = time.Now()
+	t.SetUpdatedAt(time.Now())
 
 	return nil
 }
@@ -86,5 +139,7 @@ func (t *Task) Validate() error {
 		validation.Field(&t.taskText, validation.Required, validation.Length(1, 255)),
 		validation.Field(&t.taskOrder, validation.Min(0)),
 		validation.Field(&t.userID, validation.Required, is.UUID),
+		validation.Field(&t.createdAt, validation.By(timeNotZero)),
+		validation.Field(&t.updatedAt, validation.By(timeNotZero)),
 	)
 }

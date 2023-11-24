@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	_ "github.com/lib/pq"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 )
 
 type Store struct {
@@ -19,7 +19,7 @@ func New(db *sql.DB) *Store {
 	}
 }
 
-func (s *Store) User() store.UserRepository {
+func (s *Store) User() domain.UserRepository {
 	if s.userRepository == nil {
 		s.userRepository = &UserRepository{
 			store: s,
@@ -29,7 +29,7 @@ func (s *Store) User() store.UserRepository {
 	return s.userRepository
 }
 
-func (s *Store) Task() store.TaskRepository {
+func (s *Store) Task() domain.TaskRepository {
 	if s.taskRepository == nil {
 		s.taskRepository = &TaskRepository{
 			store: s,

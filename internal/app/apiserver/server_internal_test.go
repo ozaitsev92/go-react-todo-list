@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -61,10 +62,10 @@ func TestServer_HandleUsersCreate(t *testing.T) {
 }
 
 func TestServer_HandleSessionsCreate(t *testing.T) {
-	u := domain.TestUser(t)
+	u := domain.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
-	store.User().Create(u)
+	store.User().SaveUser(context.Background(), u)
 
 	s := newServer(store, sessions.NewCookieStore([]byte("secret")))
 
@@ -76,8 +77,8 @@ func TestServer_HandleSessionsCreate(t *testing.T) {
 		{
 			name: "valid",
 			payload: map[string]string{
-				"email":    u.Email,
-				"password": u.Password,
+				"email":    u.GetEmail(),
+				"password": u.GetPassword(),
 			},
 			expectedCode: http.StatusOK,
 		},
@@ -111,10 +112,10 @@ func TestServer_HandleSessionsCreate(t *testing.T) {
 }
 
 func TestServer_AuthenticateUser(t *testing.T) {
-	u := domain.TestUser(t)
+	u := domain.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
-	store.User().Create(u)
+	store.User().SaveUser(context.Background(), u)
 
 	testCases := []struct {
 		name         string
@@ -124,7 +125,7 @@ func TestServer_AuthenticateUser(t *testing.T) {
 		{
 			name: "authenticated",
 			cookieValue: map[interface{}]interface{}{
-				"user_id": u.ID.String(),
+				"user_id": u.GetID().String(),
 			},
 			expectedCode: http.StatusOK,
 		},

@@ -103,8 +103,8 @@ func (ts *TaskService) MarkTaskNotDone(ctx context.Context, r *MarkTaskNotDoneRe
 	return t, err
 }
 
-func (ts *TaskService) GetAllByUser(ctx context.Context, u *User) ([]*Task, error) {
-	tasks, err := ts.taskRepository.GetAllByUserID(ctx, u.GetID())
+func (ts *TaskService) GetAllByUser(ctx context.Context, r *GetTasksByUserRequest) ([]*Task, error) {
+	tasks, err := ts.taskRepository.GetAllByUserID(ctx, r.UserID)
 	if err != nil {
 		return nil, err
 	}

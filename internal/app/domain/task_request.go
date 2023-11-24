@@ -22,6 +22,10 @@ type MarkTaskNotDoneRequest struct {
 	ID uuid.UUID
 }
 
+type GetTasksByUserRequest struct {
+	UserID uuid.UUID
+}
+
 type UpdateTaskRequest struct {
 	ID        uuid.UUID
 	TaskText  string
