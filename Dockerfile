@@ -19,9 +19,13 @@ RUN apt-get update \
 RUN adduser --home "/appuser" --disabled-password appuser --gecos "appuser,-,-,-"
 USER appuser
 
-COPY --from=builder /app/appbin /home/appuser/app
+RUN mkdir -p /appuser/app
 
-WORKDIR /home/appuser/app
+COPY --from=builder /app/appbin /appuser/app
+COPY configs /appuser/app/configs
+COPY static /appuser/app/static
+
+WORKDIR /appuser/app
 
 EXPOSE 8000
 
