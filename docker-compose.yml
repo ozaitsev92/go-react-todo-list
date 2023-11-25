@@ -11,10 +11,11 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: todo_db
     networks:
-      - goapp_network
+      - todoapp_network
 
-  goapp:
-    container_name: goapp
+  todoapp:
+    container_name: todoapp
+    restart: always
     build:
       dockerfile: Dockerfile
       context: .
@@ -23,7 +24,7 @@ services:
     depends_on:
       - postgres
     networks:
-      - goapp_network
+      - todoapp_network
 
 networks:
-  goapp_network:
+  todoapp_network:
