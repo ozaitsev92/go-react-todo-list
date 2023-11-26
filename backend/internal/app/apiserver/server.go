@@ -58,7 +58,6 @@ func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
-	// s.router.PathPrefix("/").Handler(staticHandler{staticPath: "static", indexPage: "index.html"})
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods(http.MethodPost)
 	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
 	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
@@ -72,22 +71,6 @@ func (s *server) configureRouter() {
 	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkDone()).Methods(http.MethodPut)
 	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).Methods(http.MethodPut)
 }
-
-// type staticHandler struct {
-// 	staticPath string
-// 	indexPage  string
-// }
-
-// func (h staticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-// 	_, err := filepath.Abs(r.URL.Path)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
-// }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {
 	service := domain.NewTaskService(s.store.Task())
