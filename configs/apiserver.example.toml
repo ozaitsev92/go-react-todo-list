@@ -6,3 +6,8 @@ write_timeout = 15
 read_timeout = 15
 idle_timeout = 60
 graceful_timeout = 15
+
+jwt_signing_key = "go-todo-app"
+jwt_session_length = 30
+jwt_cookie_domain = "localhost"
+jwt_secure_cookie = true

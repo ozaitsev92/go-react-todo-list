@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/gorilla/sessions"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/apiserver/jwt"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
 )
 
@@ -21,9 +21,8 @@ func Start(config *Config) {
 
 	defer db.Close()
 	store := sqlstore.New(db)
-	sessionStore := sessions.NewCookieStore([]byte(config.SessionKey))
-
-	appServer := newServer(store, sessionStore)
+	jwtService := jwt.NewJWTService([]byte(config.JWTSigningKey), config.JWTSessionLength, config.JWTCookieDomain, config.JWTSecureCookie)
+	appServer := newServer(store, jwtService)
 
 	srv := &http.Server{
 		Addr:         config.BindAddr,

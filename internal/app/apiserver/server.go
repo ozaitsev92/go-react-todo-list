@@ -4,15 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/apiserver/jwt"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
 	"github.com/sirupsen/logrus"
@@ -33,18 +31,18 @@ var (
 type ctxKey int8
 
 type server struct {
-	logger       *logrus.Logger
-	router       *mux.Router
-	store        store.Store
-	sessionStore sessions.Store
+	logger     *logrus.Logger
+	router     *mux.Router
+	store      store.Store
+	jwtService *jwt.JWTService
 }
 
-func newServer(store store.Store, sessionStore sessions.Store) *server {
+func newServer(store store.Store, jwtService *jwt.JWTService) *server {
 	s := &server{
-		router:       mux.NewRouter(),
-		logger:       logrus.New(),
-		store:        store,
-		sessionStore: sessionStore,
+		router:     mux.NewRouter(),
+		logger:     logrus.New(),
+		store:      store,
+		jwtService: jwtService,
 	}
 
 	s.configureRouter()
@@ -60,12 +58,13 @@ func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
-	s.router.PathPrefix("/").Handler(staticHandler{staticPath: "static", indexPage: "index.html"})
+	// s.router.PathPrefix("/").Handler(staticHandler{staticPath: "static", indexPage: "index.html"})
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods(http.MethodPost)
-	s.router.HandleFunc("/sessions", s.handleSessionsCreate()).Methods(http.MethodPost)
+	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
+	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
 
 	tasksSubRouter := s.router.PathPrefix("/users/{user_id}/tasks").Subrouter()
-	tasksSubRouter.Use(s.authenticateUser)
+	tasksSubRouter.Use(s.jwtProtectedMiddleware)
 	tasksSubRouter.HandleFunc("/", s.handleTasksCreate()).Methods(http.MethodPost)
 	tasksSubRouter.HandleFunc("/", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
 	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksDelete()).Methods(http.MethodDelete)
@@ -73,32 +72,27 @@ func (s *server) configureRouter() {
 	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).Methods(http.MethodPut)
 }
 
-type staticHandler struct {
-	staticPath string
-	indexPage  string
-}
+// type staticHandler struct {
+// 	staticPath string
+// 	indexPage  string
+// }
 
-func (h staticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path, err := filepath.Abs(r.URL.Path)
-	log.Println(path)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+// func (h staticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// 	_, err := filepath.Abs(r.URL.Path)
 
-	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
-}
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
+// }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {
-	type request struct {
-		TaskText  string `json:"task_text"`
-		TaskOrder int    `json:"task_order"`
-	}
-
 	service := domain.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
+		req := &domain.CreateTaskRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
@@ -116,11 +110,9 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 			return
 		}
 
-		task, err := service.CreateTask(r.Context(), &domain.CreateTaskRequest{
-			TaskText:  req.TaskText,
-			TaskOrder: req.TaskOrder,
-			UserID:    userID,
-		})
+		req.UserID = userID
+
+		task, err := service.CreateTask(r.Context(), req)
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
@@ -277,24 +269,16 @@ func (s *server) handleTasksDelete() http.HandlerFunc {
 }
 
 func (s *server) handleUsersCreate() http.HandlerFunc {
-	type request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
 	service := domain.NewUserService(s.store.User())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
+		req := &domain.CreateUserRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
 
-		u, err := service.CreateUser(r.Context(), &domain.CreateUserRequest{
-			Email:    req.Email,
-			Password: req.Password,
-		})
+		u, err := service.CreateUser(r.Context(), req)
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
@@ -304,43 +288,37 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 	}
 }
 
-func (s *server) handleSessionsCreate() http.HandlerFunc {
-	type request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
+func (s *server) handleUserLogin() http.HandlerFunc {
 	service := domain.NewUserService(s.store.User())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
+		req := &domain.AuthenticateUserRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
 
-		u, err := service.AuthenticateUser(r.Context(), &domain.AuthenticateUserRequest{
-			Email:    req.Email,
-			Password: req.Password,
-		})
+		u, err := service.AuthenticateUser(r.Context(), req)
 
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
 			return
 		}
 
-		session, err := s.sessionStore.Get(r, sessionName)
+		token, err := s.jwtService.CreateJWTTokenForUser(u.GetID())
 		if err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		session.Values["user_id"] = u.GetID().String()
-		if err := s.sessionStore.Save(r, w, session); err != nil {
-			s.error(w, r, http.StatusInternalServerError, err)
-			return
-		}
+		http.SetCookie(w, s.jwtService.AuthCookie(token))
+		s.respond(w, r, http.StatusOK, nil)
+	}
+}
 
+func (s *server) handleUserLogout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, s.jwtService.ExpiredAuthCookie())
 		s.respond(w, r, http.StatusOK, nil)
 	}
 }
@@ -353,23 +331,11 @@ func (s *server) setRequestID(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) authenticateUser(next http.Handler) http.Handler {
+func (s *server) jwtProtectedMiddleware(next http.Handler) http.Handler {
 	service := domain.NewUserService(s.store.User())
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := s.sessionStore.Get(r, sessionName)
-		if err != nil {
-			s.error(w, r, http.StatusInternalServerError, err)
-			return
-		}
-
-		id, ok := session.Values["user_id"]
-		if !ok {
-			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
-			return
-		}
-
-		userID, err := uuid.Parse(id.(string))
+		userID, err := s.jwtService.GetUserIDFromRequest(r)
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
@@ -413,6 +379,7 @@ func (s *server) error(w http.ResponseWriter, r *http.Request, code int, err err
 
 func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
 	w.WriteHeader(code)
+	w.Header().Add("Content-Type", "application/json")
 	if data != nil {
 		json.NewEncoder(w).Encode(data)
 	}
