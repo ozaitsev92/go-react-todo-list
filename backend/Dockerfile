@@ -23,7 +23,6 @@ RUN mkdir -p /appuser/app
 
 COPY --from=builder /app/appbin /appuser/app
 COPY configs /appuser/app/configs
-COPY static /appuser/app/static
 
 WORKDIR /appuser/app
 
