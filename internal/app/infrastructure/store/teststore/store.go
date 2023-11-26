@@ -26,7 +26,7 @@ func (s *Store) User() domain.UserRepository {
 }
 
 func (s *Store) Task() domain.TaskRepository {
-	if s.userRepository == nil {
+	if s.taskRepository == nil {
 		s.taskRepository = &TaskRepository{
 			store: s,
 			tasks: make(map[uuid.UUID]*domain.Task),

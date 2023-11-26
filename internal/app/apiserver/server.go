@@ -65,9 +65,10 @@ func (s *server) configureRouter() {
 
 	tasksSubRouter := s.router.PathPrefix("/users/{user_id}/tasks").Subrouter()
 	tasksSubRouter.Use(s.jwtProtectedMiddleware)
-	tasksSubRouter.HandleFunc("/", s.handleTasksCreate()).Methods(http.MethodPost)
-	tasksSubRouter.HandleFunc("/", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
+	tasksSubRouter.HandleFunc("", s.handleTasksCreate()).Methods(http.MethodPost)
+	tasksSubRouter.HandleFunc("", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
 	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksDelete()).Methods(http.MethodDelete)
+	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksUpdate()).Methods(http.MethodPut)
 	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkDone()).Methods(http.MethodPut)
 	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).Methods(http.MethodPut)
 }
@@ -154,7 +155,52 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 			resp = append(resp, domain.TaskToResponse(*t))
 		}
 
-		s.respond(w, r, http.StatusCreated, resp)
+		s.respond(w, r, http.StatusOK, resp)
+	}
+}
+
+func (s *server) handleTasksUpdate() http.HandlerFunc {
+	service := domain.NewTaskService(s.store.Task())
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &domain.UpdateTaskRequest{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		if u.GetID() != userID {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		taskID, err := uuid.Parse(mux.Vars(r)["task_id"])
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
+			return
+		}
+
+		req.ID = taskID
+
+		t, err := service.UpdateTask(r.Context(), req)
+		if err != nil {
+			if err == store.ErrRecordNotFound {
+				s.error(w, r, http.StatusNotFound, err)
+			} else {
+				s.error(w, r, http.StatusInternalServerError, err)
+			}
+
+			return
+		}
+
+		s.respond(w, r, http.StatusOK, domain.TaskToResponse(*t))
 	}
 }
 
@@ -191,7 +237,7 @@ func (s *server) handleTasksMarkDone() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, domain.TaskToResponse(*t))
+		s.respond(w, r, http.StatusOK, domain.TaskToResponse(*t))
 	}
 }
 
@@ -228,7 +274,7 @@ func (s *server) handleTasksMarkNotDone() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, domain.TaskToResponse(*t))
+		s.respond(w, r, http.StatusOK, domain.TaskToResponse(*t))
 	}
 }
 
@@ -264,7 +310,7 @@ func (s *server) handleTasksDelete() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, nil)
+		s.respond(w, r, http.StatusOK, nil)
 	}
 }
 
