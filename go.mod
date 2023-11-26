@@ -5,11 +5,10 @@ go 1.21.1
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/securecookie v1.1.2
-	github.com/gorilla/sessions v1.2.2
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
