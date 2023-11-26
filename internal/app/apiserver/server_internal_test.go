@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,7 +57,7 @@ func TestServer_HandleUsersCreate(t *testing.T) {
 			req, _ := http.NewRequest(http.MethodPost, "/users", b)
 
 			s.ServeHTTP(rec, req)
-			assert.Equal(t, rec.Code, tc.expectedCode)
+			assert.Equal(t, tc.expectedCode, rec.Code)
 		})
 	}
 }
@@ -107,7 +108,7 @@ func TestServer_HandleUserLogin(t *testing.T) {
 			req, _ := http.NewRequest(http.MethodPost, "/login", b)
 
 			s.ServeHTTP(rec, req)
-			assert.Equal(t, rec.Code, tc.expectedCode)
+			assert.Equal(t, tc.expectedCode, rec.Code)
 
 			if tc.expectedCode == http.StatusOK {
 				cookies := rec.Result().Cookies()
@@ -206,21 +207,153 @@ func TestServer_JWTProtectedMiddleware(t *testing.T) {
 }
 
 func TestServer_HandleTasksCreate(t *testing.T) {
-	t.Skip("TODO implement")
+	store := teststore.New()
+	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
+	s := newServer(store, jwtService)
+
+	u := domain.TestUser(t, "email@example.com", "a password")
+	store.User().SaveUser(context.Background(), u)
+	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
+
+	testCases := []struct {
+		name         string
+		payload      interface{}
+		expectedCode int
+	}{
+		{
+			name: "valid",
+			payload: map[string]interface{}{
+				"task_text":  "test task",
+				"task_order": 1,
+				"user_id":    u.GetID(),
+			},
+			expectedCode: http.StatusCreated,
+		},
+		{
+			name:         "invalid payload",
+			payload:      "invalid",
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name: "invalid params",
+			payload: map[string]interface{}{
+				"task_text": "",
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+
+			b := &bytes.Buffer{}
+			json.NewEncoder(b).Encode(tc.payload)
+
+			url := fmt.Sprintf("/users/%s/tasks", u.GetID())
+			req, _ := http.NewRequest(http.MethodPost, url, b)
+			req.Header.Set("Cookie", jwtService.AuthCookie(token).String())
+
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+		})
+	}
 }
 
-func TestServer_HandleTasksGetAllByUse(t *testing.T) {
-	t.Skip("TODO implement")
+func TestServer_HandleTasksGetAllByUser(t *testing.T) {
+	store := teststore.New()
+	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
+	s := newServer(store, jwtService)
+
+	u := domain.TestUser(t, "email@example.com", "a password")
+	store.User().SaveUser(context.Background(), u)
+
+	task := domain.TestTask(t, "test task", 0, false, u.GetID())
+	store.Task().SaveTask(context.Background(), task)
+
+	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
+
+	rec := httptest.NewRecorder()
+
+	url := fmt.Sprintf("/users/%s/tasks", u.GetID())
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	req.Header.Set("Cookie", jwtService.AuthCookie(token).String())
+
+	s.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestServer_HandleTasksMarkAsDone(t *testing.T) {
-	t.Skip("TODO implement")
+	store := teststore.New()
+	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
+	s := newServer(store, jwtService)
+
+	u := domain.TestUser(t, "email@example.com", "a password")
+	store.User().SaveUser(context.Background(), u)
+
+	task := domain.TestTask(t, "test task", 0, false, u.GetID())
+	store.Task().SaveTask(context.Background(), task)
+
+	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
+
+	rec := httptest.NewRecorder()
+
+	url := fmt.Sprintf("/users/%s/tasks/%s/mark-done", u.GetID(), task.GetID())
+	req, _ := http.NewRequest(http.MethodPut, url, nil)
+	req.Header.Set("Cookie", jwtService.AuthCookie(token).String())
+
+	s.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
-	t.Skip("TODO implement")
+	store := teststore.New()
+	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
+	s := newServer(store, jwtService)
+
+	u := domain.TestUser(t, "email@example.com", "a password")
+	store.User().SaveUser(context.Background(), u)
+
+	task := domain.TestTask(t, "test task", 0, true, u.GetID())
+	store.Task().SaveTask(context.Background(), task)
+
+	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
+
+	rec := httptest.NewRecorder()
+
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(map[string]interface{}{
+		"task_text":  "updated task text",
+		"task_order": 10,
+	})
+
+	url := fmt.Sprintf("/users/%s/tasks/%s", u.GetID(), task.GetID())
+	req, _ := http.NewRequest(http.MethodPut, url, b)
+	req.Header.Set("Cookie", jwtService.AuthCookie(token).String())
+
+	s.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestServer_HandleTasksDelete(t *testing.T) {
-	t.Skip("TODO implement")
+	store := teststore.New()
+	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
+	s := newServer(store, jwtService)
+
+	u := domain.TestUser(t, "email@example.com", "a password")
+	store.User().SaveUser(context.Background(), u)
+
+	task := domain.TestTask(t, "test task", 0, true, u.GetID())
+	store.Task().SaveTask(context.Background(), task)
+
+	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
+
+	rec := httptest.NewRecorder()
+
+	url := fmt.Sprintf("/users/%s/tasks/%s", u.GetID(), task.GetID())
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+	req.Header.Set("Cookie", jwtService.AuthCookie(token).String())
+
+	s.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }

@@ -5,31 +5,31 @@ import (
 )
 
 type CreateTaskRequest struct {
-	TaskText  string
-	TaskOrder int
-	UserID    uuid.UUID
+	TaskText  string    `json:"task_text"`
+	TaskOrder int       `json:"task_order"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 type DeleteTaskRequest struct {
-	ID uuid.UUID
+	ID uuid.UUID `json:"user_id"`
 }
 
 type MarkTaskDoneRequest struct {
-	ID uuid.UUID
+	ID uuid.UUID `json:"user_id"`
 }
 
 type MarkTaskNotDoneRequest struct {
-	ID uuid.UUID
+	ID uuid.UUID `json:"user_id"`
 }
 
 type GetTasksByUserRequest struct {
-	UserID uuid.UUID
+	UserID uuid.UUID `json:"user_id"`
 }
 
 type UpdateTaskRequest struct {
-	ID        uuid.UUID
-	TaskText  string
-	TaskOrder int
+	ID        uuid.UUID `json:"id"`
+	TaskText  string    `json:"task_text"`
+	TaskOrder int       `json:"task_order"`
 }
 
 func (r *UpdateTaskRequest) EnrichTask(t *Task) {
