@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 )
 
 type UserRepository struct {
@@ -22,8 +22,8 @@ type DBUserRecord struct {
 	UpdatedAt         time.Time
 }
 
-func (r *DBUserRecord) ToUser() (*domain.User, error) {
-	u := &domain.User{}
+func (r *DBUserRecord) ToUser() (*todolist.User, error) {
+	u := &todolist.User{}
 
 	if err := u.SetID(r.ID); err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (r *DBUserRecord) ToUser() (*domain.User, error) {
 	return u, nil
 }
 
-func (r *UserRepository) SaveUser(ctx context.Context, user *domain.User) error {
+func (r *UserRepository) SaveUser(ctx context.Context, user *todolist.User) error {
 	_, err := r.store.db.Exec(
 		`
 			INSERT INTO users (id, email, encrypted_password, created_at, updated_at)
@@ -72,7 +72,7 @@ func (r *UserRepository) SaveUser(ctx context.Context, user *domain.User) error 
 	return nil
 }
 
-func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*todolist.User, error) {
 	row := r.store.db.QueryRow(
 		"SELECT id, email, encrypted_password, created_at, updated_at FROM users WHERE email = $1;",
 		email,
@@ -97,7 +97,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 	return rec.ToUser()
 }
 
-func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*todolist.User, error) {
 	row := r.store.db.QueryRow(
 		"SELECT id, email, encrypted_password, created_at, updated_at FROM users WHERE id = $1;",
 		id,

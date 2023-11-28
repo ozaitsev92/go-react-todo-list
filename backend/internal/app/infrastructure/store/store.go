@@ -1,10 +1,8 @@
 package store
 
-import (
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
-)
+import "github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 
 type Store interface {
-	User() domain.UserRepository
-	Task() domain.TaskRepository
+	User() todolist.UserRepository
+	Task() todolist.TaskRepository
 }

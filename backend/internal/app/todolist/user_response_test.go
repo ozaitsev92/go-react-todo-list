@@ -1,9 +1,9 @@
-package domain_test
+package todolist_test
 
 import (
 	"testing"
 
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,8 +16,8 @@ func TestUserToResponse(t *testing.T) {
 		"a password",
 	}
 
-	user := domain.TestUser(t, testCase.email, testCase.password)
-	r := domain.UserToResponse(*user)
+	user := todolist.TestUser(t, testCase.email, testCase.password)
+	r := todolist.UserToResponse(*user)
 	assert.NotEmpty(t, r.ID)
 	assert.Equal(t, testCase.email, r.Email)
 	assert.NotEmpty(t, r.CreatedAt)

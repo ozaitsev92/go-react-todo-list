@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/teststore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTaskRepository_SaveTask(t *testing.T) {
 	s := teststore.New()
-	task := domain.TestTask(t, "test task", 1, false, uuid.New())
+	task := todolist.TestTask(t, "test task", 1, false, uuid.New())
 	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
 }
@@ -21,7 +21,7 @@ func TestTaskRepository_FindByID(t *testing.T) {
 	s := teststore.New()
 	taskRepo := s.Task()
 
-	task := domain.TestTask(t, "test task", 1, false, uuid.New())
+	task := todolist.TestTask(t, "test task", 1, false, uuid.New())
 	assert.NoError(t, taskRepo.SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
 
@@ -37,17 +37,17 @@ func TestTaskRepository_GetAllByUserID(t *testing.T) {
 
 	userID := uuid.New()
 
-	task1 := domain.TestTask(t, "this is a completed task", 0, true, userID)
+	task1 := todolist.TestTask(t, "this is a completed task", 0, true, userID)
 	assert.NoError(t, taskRepo.SaveTask(context.Background(), task1))
 
-	task2 := domain.TestTask(t, "this is a pending task", 1, false, userID)
+	task2 := todolist.TestTask(t, "this is a pending task", 1, false, userID)
 	assert.NoError(t, taskRepo.SaveTask(context.Background(), task2))
 
 	userTasks, err := taskRepo.GetAllByUserID(context.Background(), userID)
 	assert.NoError(t, err)
 	assert.Len(t, userTasks, 2)
 
-	var userTask1 *domain.Task
+	var userTask1 *todolist.Task
 	for _, t := range userTasks {
 		if t.GetID() == task1.GetID() {
 			userTask1 = t
@@ -61,7 +61,7 @@ func TestTaskRepository_GetAllByUserID(t *testing.T) {
 	assert.Equal(t, task1.GetIsDone(), userTasks[0].GetIsDone())
 	assert.Equal(t, task1.GetUserID(), userTasks[0].GetUserID())
 
-	var userTask2 *domain.Task
+	var userTask2 *todolist.Task
 	for _, t := range userTasks {
 		if t.GetID() == task2.GetID() {
 			userTask2 = t
@@ -81,7 +81,7 @@ func TestTaskRepository_DeleteTask(t *testing.T) {
 	taskRepo := s.Task()
 
 	userID := uuid.New()
-	task := domain.TestTask(t, "test task", 1, false, userID)
+	task := todolist.TestTask(t, "test task", 1, false, userID)
 
 	assert.NoError(t, taskRepo.SaveTask(context.Background(), task))
 	assert.NotNil(t, task)

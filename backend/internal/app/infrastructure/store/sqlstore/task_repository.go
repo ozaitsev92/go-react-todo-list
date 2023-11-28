@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 )
 
 type TaskRepository struct {
@@ -22,8 +22,8 @@ type DBTaskRecord struct {
 	UpdatedAt time.Time
 }
 
-func (r *DBTaskRecord) ToTask() (*domain.Task, error) {
-	t := &domain.Task{}
+func (r *DBTaskRecord) ToTask() (*todolist.Task, error) {
+	t := &todolist.Task{}
 
 	if err := t.SetID(r.ID); err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (r *DBTaskRecord) ToTask() (*domain.Task, error) {
 	return t, nil
 }
 
-func (r *TaskRepository) SaveTask(ctx context.Context, task *domain.Task) error {
+func (r *TaskRepository) SaveTask(ctx context.Context, task *todolist.Task) error {
 	_, err := r.store.db.Exec(
 		`
 			INSERT INTO tasks (id, task_text, task_order, is_done, user_id, created_at, updated_at)
@@ -83,7 +83,7 @@ func (r *TaskRepository) SaveTask(ctx context.Context, task *domain.Task) error 
 	return nil
 }
 
-func (r *TaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Task, error) {
+func (r *TaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*todolist.Task, error) {
 	row := r.store.db.QueryRow(`
 		SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at
 		FROM tasks
@@ -108,7 +108,7 @@ func (r *TaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Ta
 	return rec.ToTask()
 }
 
-func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Task, error) {
+func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]*todolist.Task, error) {
 	rows, err := r.store.db.Query(`
 		SELECT id, task_text, task_order, is_done, user_id, created_at, updated_at
 		FROM tasks
@@ -121,7 +121,7 @@ func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) (
 	}
 	defer rows.Close()
 
-	tasks := []*domain.Task{}
+	tasks := []*todolist.Task{}
 	for rows.Next() {
 		rec := &DBTaskRecord{}
 		err := rows.Scan(
@@ -141,14 +141,14 @@ func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) (
 		if task, err := rec.ToTask(); err == nil {
 			tasks = append(tasks, task)
 		} else {
-			return []*domain.Task{}, nil
+			return []*todolist.Task{}, nil
 		}
 	}
 
 	return tasks, nil
 }
 
-func (r *TaskRepository) DeleteTask(ctx context.Context, task *domain.Task) error {
+func (r *TaskRepository) DeleteTask(ctx context.Context, task *todolist.Task) error {
 	_, err := r.store.db.Exec("DELETE FROM tasks WHERE id = $1;", task.GetID())
 	if err != nil {
 		return err

@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +17,7 @@ func TestUserRepository_Create(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t, "example@email.com", "a password")
+	u := todolist.TestUser(t, "example@email.com", "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 }
@@ -34,7 +34,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
-	u = domain.TestUser(t, email, "a password")
+	u = todolist.TestUser(t, email, "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 
 	u, err = s.User().FindByEmail(context.Background(), email)
@@ -55,7 +55,7 @@ func TestUserRepository_Find(t *testing.T) {
 	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 	assert.Nil(t, u)
 
-	u = domain.TestUser(t, "example@email.com", "a password")
+	u = todolist.TestUser(t, "example@email.com", "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 
 	id = u.GetID()
