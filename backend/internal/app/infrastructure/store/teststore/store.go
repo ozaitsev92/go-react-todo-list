@@ -2,34 +2,34 @@ package teststore
 
 import (
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 )
 
 type Store struct {
-	userRepository domain.UserRepository
-	taskRepository domain.TaskRepository
+	userRepository todolist.UserRepository
+	taskRepository todolist.TaskRepository
 }
 
 func New() *Store {
 	return &Store{}
 }
 
-func (s *Store) User() domain.UserRepository {
+func (s *Store) User() todolist.UserRepository {
 	if s.userRepository == nil {
 		s.userRepository = &UserRepository{
 			store: s,
-			users: make(map[uuid.UUID]*domain.User),
+			users: make(map[uuid.UUID]*todolist.User),
 		}
 	}
 
 	return s.userRepository
 }
 
-func (s *Store) Task() domain.TaskRepository {
+func (s *Store) Task() todolist.TaskRepository {
 	if s.taskRepository == nil {
 		s.taskRepository = &TaskRepository{
 			store: s,
-			tasks: make(map[uuid.UUID]*domain.Task),
+			tasks: make(map[uuid.UUID]*todolist.Task),
 		}
 	}
 

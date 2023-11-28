@@ -1,4 +1,4 @@
-package domain
+package todolist
 
 import "github.com/google/uuid"
 

@@ -1,23 +1,23 @@
-package domain_test
+package todolist_test
 
 import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTask_Validate(t *testing.T) {
 	testCases := []struct {
 		name    string
-		task    func() *domain.Task
+		task    func() *todolist.Task
 		isValid bool
 	}{
 		{
 			name: "valid",
-			task: func() *domain.Task {
-				return domain.TestTask(
+			task: func() *todolist.Task {
+				return todolist.TestTask(
 					t,
 					"test text",
 					0,
@@ -29,8 +29,8 @@ func TestTask_Validate(t *testing.T) {
 		},
 		{
 			name: "task TaskText is empty",
-			task: func() *domain.Task {
-				return domain.TestTask(
+			task: func() *todolist.Task {
+				return todolist.TestTask(
 					t,
 					"",
 					0,
@@ -42,8 +42,8 @@ func TestTask_Validate(t *testing.T) {
 		},
 		{
 			name: "task TaskOrder is invalid",
-			task: func() *domain.Task {
-				return domain.TestTask(
+			task: func() *todolist.Task {
+				return todolist.TestTask(
 					t,
 					"test text",
 					-1,
@@ -67,19 +67,19 @@ func TestTask_Validate(t *testing.T) {
 }
 
 func TestTask_MarkDone(t *testing.T) {
-	task := domain.TestTask(t, "test text", 0, false, uuid.New())
+	task := todolist.TestTask(t, "test text", 0, false, uuid.New())
 	assert.NoError(t, task.MarkDone())
 	assert.True(t, task.GetIsDone())
 }
 
 func TestTask_MarkNotDone(t *testing.T) {
-	task := domain.TestTask(t, "test text", 0, true, uuid.New())
+	task := todolist.TestTask(t, "test text", 0, true, uuid.New())
 	assert.NoError(t, task.MarkNotDone())
 	assert.False(t, task.GetIsDone())
 }
 
 func TestTask_BeforeUpdate(t *testing.T) {
-	task := domain.TestTask(t, "test text", 0, true, uuid.New())
+	task := todolist.TestTask(t, "test text", 0, true, uuid.New())
 	assert.Equal(t, task.GetUpdatedAt(), task.GetCreatedAt())
 	assert.NoError(t, task.BeforeUpdate())
 	assert.NotEqual(t, task.GetUpdatedAt(), task.GetCreatedAt())

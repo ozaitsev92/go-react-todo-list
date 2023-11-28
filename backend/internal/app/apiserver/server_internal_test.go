@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/apiserver/jwt"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/teststore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,7 +63,7 @@ func TestServer_HandleUsersCreate(t *testing.T) {
 }
 
 func TestServer_HandleUserLogin(t *testing.T) {
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -130,7 +130,7 @@ func TestServer_HandleUserLogin(t *testing.T) {
 }
 
 func TestServer_HandleUserLogout(t *testing.T) {
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -162,7 +162,7 @@ func TestServer_HandleUserLogout(t *testing.T) {
 }
 
 func TestServer_JWTProtectedMiddleware(t *testing.T) {
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -211,7 +211,7 @@ func TestServer_HandleTasksCreate(t *testing.T) {
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
 
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
 
@@ -265,10 +265,10 @@ func TestServer_HandleTasksGetAllByUser(t *testing.T) {
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
 
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
-	task := domain.TestTask(t, "test task", 0, false, u.GetID())
+	task := todolist.TestTask(t, "test task", 0, false, u.GetID())
 	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
@@ -288,10 +288,10 @@ func TestServer_HandleTasksMarkAsDone(t *testing.T) {
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
 
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
-	task := domain.TestTask(t, "test task", 0, false, u.GetID())
+	task := todolist.TestTask(t, "test task", 0, false, u.GetID())
 	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
@@ -311,10 +311,10 @@ func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
 
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
-	task := domain.TestTask(t, "test task", 0, true, u.GetID())
+	task := todolist.TestTask(t, "test task", 0, true, u.GetID())
 	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
@@ -341,10 +341,10 @@ func TestServer_HandleTasksDelete(t *testing.T) {
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
 
-	u := domain.TestUser(t, "email@example.com", "a password")
+	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
-	task := domain.TestTask(t, "test task", 0, true, u.GetID())
+	task := todolist.TestTask(t, "test task", 0, true, u.GetID())
 	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())

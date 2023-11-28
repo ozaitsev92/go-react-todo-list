@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,11 +15,11 @@ func TestTaskRepository_Create(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t, "example@email.com", "a password")
+	u := todolist.TestUser(t, "example@email.com", "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task := domain.TestTask(t, "this is a first task", 0, false, u.GetID())
+	task := todolist.TestTask(t, "this is a first task", 0, false, u.GetID())
 	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
 }
@@ -30,11 +30,11 @@ func TestTaskRepository_FindByID(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t, "example@email.com", "a password")
+	u := todolist.TestUser(t, "example@email.com", "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task := domain.TestTask(t, "this is a first task", 0, true, u.GetID())
+	task := todolist.TestTask(t, "this is a first task", 0, true, u.GetID())
 	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
 
@@ -50,15 +50,15 @@ func TestTaskRepository_GetAllByUserID(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t, "example@email.com", "a password")
+	u := todolist.TestUser(t, "example@email.com", "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task1 := domain.TestTask(t, "this is a first task", 0, true, u.GetID())
+	task1 := todolist.TestTask(t, "this is a first task", 0, true, u.GetID())
 	assert.NoError(t, s.Task().SaveTask(context.Background(), task1))
 	assert.NotNil(t, task1)
 
-	task2 := domain.TestTask(t, "this is a second task", 1, true, u.GetID())
+	task2 := todolist.TestTask(t, "this is a second task", 1, true, u.GetID())
 	assert.NoError(t, s.Task().SaveTask(context.Background(), task2))
 	assert.NotNil(t, task2)
 
@@ -85,11 +85,11 @@ func TestTaskRepository_Delete(t *testing.T) {
 
 	s := sqlstore.New(db)
 
-	u := domain.TestUser(t, "example@email.com", "a password")
+	u := todolist.TestUser(t, "example@email.com", "a password")
 	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 	assert.NotNil(t, u)
 
-	task := domain.TestTask(t, "text", 0, true, u.GetID())
+	task := todolist.TestTask(t, "text", 0, true, u.GetID())
 	assert.NoError(t, s.Task().SaveTask(context.Background(), task))
 	assert.NotNil(t, task)
 	assert.True(t, task.GetIsDone())

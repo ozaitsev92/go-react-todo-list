@@ -1,10 +1,10 @@
-package domain_test
+package todolist_test
 
 import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,8 +21,8 @@ func TestTaskToResponse(t *testing.T) {
 		uuid.New(),
 	}
 
-	task := domain.TestTask(t, testCase.text, testCase.order, testCase.isDone, testCase.userID)
-	r := domain.TaskToResponse(*task)
+	task := todolist.TestTask(t, testCase.text, testCase.order, testCase.isDone, testCase.userID)
+	r := todolist.TaskToResponse(*task)
 	assert.NotEmpty(t, r.ID)
 	assert.Equal(t, testCase.text, r.TaskText)
 	assert.Equal(t, testCase.order, r.TaskOrder)

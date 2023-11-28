@@ -1,25 +1,25 @@
-package domain_test
+package todolist_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/teststore"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTaskService_CreateTask(t *testing.T) {
 	testCases := []struct {
 		name    string
-		r       func() *domain.CreateTaskRequest
+		r       func() *todolist.CreateTaskRequest
 		isValid bool
 	}{
 		{
 			name: "valid",
-			r: func() *domain.CreateTaskRequest {
-				return &domain.CreateTaskRequest{
+			r: func() *todolist.CreateTaskRequest {
+				return &todolist.CreateTaskRequest{
 					TaskText:  "task text",
 					TaskOrder: 0,
 				}
@@ -28,8 +28,8 @@ func TestTaskService_CreateTask(t *testing.T) {
 		},
 		{
 			name: "task text invalid",
-			r: func() *domain.CreateTaskRequest {
-				return &domain.CreateTaskRequest{
+			r: func() *todolist.CreateTaskRequest {
+				return &todolist.CreateTaskRequest{
 					TaskText:  "",
 					TaskOrder: 0,
 				}
@@ -38,8 +38,8 @@ func TestTaskService_CreateTask(t *testing.T) {
 		},
 		{
 			name: "task order invalid",
-			r: func() *domain.CreateTaskRequest {
-				return &domain.CreateTaskRequest{
+			r: func() *todolist.CreateTaskRequest {
+				return &todolist.CreateTaskRequest{
 					TaskText:  "task text",
 					TaskOrder: -10,
 				}
@@ -48,7 +48,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 		},
 	}
 
-	service := domain.NewTaskService(teststore.New().Task())
+	service := todolist.NewTaskService(teststore.New().Task())
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -68,13 +68,13 @@ func TestTaskService_CreateTask(t *testing.T) {
 func TestTaskService_UpdateTask(t *testing.T) {
 	testCases := []struct {
 		name    string
-		r       func(taskID uuid.UUID) *domain.UpdateTaskRequest
+		r       func(taskID uuid.UUID) *todolist.UpdateTaskRequest
 		isValid bool
 	}{
 		{
 			name: "valid",
-			r: func(taskID uuid.UUID) *domain.UpdateTaskRequest {
-				return &domain.UpdateTaskRequest{
+			r: func(taskID uuid.UUID) *todolist.UpdateTaskRequest {
+				return &todolist.UpdateTaskRequest{
 					ID:        taskID,
 					TaskText:  "task text",
 					TaskOrder: 0,
@@ -84,8 +84,8 @@ func TestTaskService_UpdateTask(t *testing.T) {
 		},
 		{
 			name: "task text invalid",
-			r: func(taskID uuid.UUID) *domain.UpdateTaskRequest {
-				return &domain.UpdateTaskRequest{
+			r: func(taskID uuid.UUID) *todolist.UpdateTaskRequest {
+				return &todolist.UpdateTaskRequest{
 					ID:        taskID,
 					TaskText:  "",
 					TaskOrder: 0,
@@ -95,8 +95,8 @@ func TestTaskService_UpdateTask(t *testing.T) {
 		},
 		{
 			name: "task order invalid",
-			r: func(taskID uuid.UUID) *domain.UpdateTaskRequest {
-				return &domain.UpdateTaskRequest{
+			r: func(taskID uuid.UUID) *todolist.UpdateTaskRequest {
+				return &todolist.UpdateTaskRequest{
 					ID:        taskID,
 					TaskText:  "task text",
 					TaskOrder: -10,
@@ -107,11 +107,11 @@ func TestTaskService_UpdateTask(t *testing.T) {
 	}
 
 	store := teststore.New().Task()
-	service := domain.NewTaskService(store)
+	service := todolist.NewTaskService(store)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			task := domain.TestTask(t, "texst text", 1, false, uuid.New())
+			task := todolist.TestTask(t, "texst text", 1, false, uuid.New())
 			assert.NoError(t, store.SaveTask(context.Background(), task))
 
 			u, err := service.UpdateTask(context.Background(), tc.r(task.GetID()))
@@ -128,25 +128,25 @@ func TestTaskService_UpdateTask(t *testing.T) {
 }
 
 func TestTaskService_DeleteTask(t *testing.T) {
-	task := domain.TestTask(t, "test text", 0, false, uuid.New())
+	task := todolist.TestTask(t, "test text", 0, false, uuid.New())
 
 	store := teststore.New().Task()
 	assert.NoError(t, store.SaveTask(context.Background(), task))
 
-	service := domain.NewTaskService(store)
-	r := &domain.DeleteTaskRequest{ID: task.GetID()}
+	service := todolist.NewTaskService(store)
+	r := &todolist.DeleteTaskRequest{ID: task.GetID()}
 	assert.NoError(t, service.DeleteTask(context.Background(), r))
 }
 
 func TestTaskService_MarkTaskDone(t *testing.T) {
-	task := domain.TestTask(t, "test text", 0, false, uuid.New())
+	task := todolist.TestTask(t, "test text", 0, false, uuid.New())
 
 	store := teststore.New().Task()
 	assert.NoError(t, store.SaveTask(context.Background(), task))
 
-	service := domain.NewTaskService(store)
+	service := todolist.NewTaskService(store)
 
-	r := &domain.MarkTaskDoneRequest{ID: task.GetID()}
+	r := &todolist.MarkTaskDoneRequest{ID: task.GetID()}
 	task, err := service.MarkTaskDone(context.Background(), r)
 	assert.NoError(t, err)
 	assert.NotNil(t, task)
@@ -154,14 +154,14 @@ func TestTaskService_MarkTaskDone(t *testing.T) {
 }
 
 func TestTaskService_MarkTaskNotDone(t *testing.T) {
-	task := domain.TestTask(t, "test text", 0, true, uuid.New())
+	task := todolist.TestTask(t, "test text", 0, true, uuid.New())
 
 	store := teststore.New().Task()
 	assert.NoError(t, store.SaveTask(context.Background(), task))
 
-	service := domain.NewTaskService(store)
+	service := todolist.NewTaskService(store)
 
-	r := &domain.MarkTaskNotDoneRequest{ID: task.GetID()}
+	r := &todolist.MarkTaskNotDoneRequest{ID: task.GetID()}
 	task, err := service.MarkTaskNotDone(context.Background(), r)
 	assert.NoError(t, err)
 	assert.NotNil(t, task)
@@ -170,13 +170,13 @@ func TestTaskService_MarkTaskNotDone(t *testing.T) {
 
 func TestTaskService_GetAllByUser(t *testing.T) {
 	userID := uuid.New()
-	task := domain.TestTask(t, "test text", 0, true, userID)
+	task := todolist.TestTask(t, "test text", 0, true, userID)
 
 	store := teststore.New().Task()
 	assert.NoError(t, store.SaveTask(context.Background(), task))
 
-	service := domain.NewTaskService(store)
-	r := &domain.GetTasksByUserRequest{UserID: userID}
+	service := todolist.NewTaskService(store)
+	r := &todolist.GetTasksByUserRequest{UserID: userID}
 	tasks, err := service.GetAllByUser(context.Background(), r)
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)

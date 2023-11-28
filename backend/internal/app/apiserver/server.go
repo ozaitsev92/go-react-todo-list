@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/apiserver/jwt"
-	"github.com/ozaitsev92/go-react-todo-list/internal/app/domain"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store"
+	"github.com/ozaitsev92/go-react-todo-list/internal/app/todolist"
 	"github.com/sirupsen/logrus"
 )
 
@@ -73,10 +73,10 @@ func (s *server) configureRouter() {
 }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {
-	service := domain.NewTaskService(s.store.Task())
+	service := todolist.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &domain.CreateTaskRequest{}
+		req := &todolist.CreateTaskRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
@@ -88,7 +88,7 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
 		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -102,12 +102,12 @@ func (s *server) handleTasksCreate() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, domain.TaskToResponse(*task))
+		s.respond(w, r, http.StatusCreated, todolist.TaskToResponse(*task))
 	}
 }
 
 func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
-	service := domain.NewTaskService(s.store.Task())
+	service := todolist.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
@@ -116,13 +116,13 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
 		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
 		}
 
-		userTasks, err := service.GetAllByUser(r.Context(), &domain.GetTasksByUserRequest{UserID: userID})
+		userTasks, err := service.GetAllByUser(r.Context(), &todolist.GetTasksByUserRequest{UserID: userID})
 		if err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
@@ -133,9 +133,9 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 			return
 		}
 
-		var resp []domain.TaskResponse
+		var resp []todolist.TaskResponse
 		for _, t := range userTasks {
-			resp = append(resp, domain.TaskToResponse(*t))
+			resp = append(resp, todolist.TaskToResponse(*t))
 		}
 
 		s.respond(w, r, http.StatusOK, resp)
@@ -143,10 +143,10 @@ func (s *server) handleTasksGetAllByUser() http.HandlerFunc {
 }
 
 func (s *server) handleTasksUpdate() http.HandlerFunc {
-	service := domain.NewTaskService(s.store.Task())
+	service := todolist.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &domain.UpdateTaskRequest{}
+		req := &todolist.UpdateTaskRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
@@ -158,7 +158,7 @@ func (s *server) handleTasksUpdate() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
 		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -183,12 +183,12 @@ func (s *server) handleTasksUpdate() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusOK, domain.TaskToResponse(*t))
+		s.respond(w, r, http.StatusOK, todolist.TaskToResponse(*t))
 	}
 }
 
 func (s *server) handleTasksMarkDone() http.HandlerFunc {
-	service := domain.NewTaskService(s.store.Task())
+	service := todolist.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
@@ -197,7 +197,7 @@ func (s *server) handleTasksMarkDone() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
 		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -209,7 +209,7 @@ func (s *server) handleTasksMarkDone() http.HandlerFunc {
 			return
 		}
 
-		t, err := service.MarkTaskDone(r.Context(), &domain.MarkTaskDoneRequest{ID: taskID})
+		t, err := service.MarkTaskDone(r.Context(), &todolist.MarkTaskDoneRequest{ID: taskID})
 		if err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
@@ -220,12 +220,12 @@ func (s *server) handleTasksMarkDone() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusOK, domain.TaskToResponse(*t))
+		s.respond(w, r, http.StatusOK, todolist.TaskToResponse(*t))
 	}
 }
 
 func (s *server) handleTasksMarkNotDone() http.HandlerFunc {
-	service := domain.NewTaskService(s.store.Task())
+	service := todolist.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
@@ -234,7 +234,7 @@ func (s *server) handleTasksMarkNotDone() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
 		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -246,7 +246,7 @@ func (s *server) handleTasksMarkNotDone() http.HandlerFunc {
 			return
 		}
 
-		t, err := service.MarkTaskNotDone(r.Context(), &domain.MarkTaskNotDoneRequest{ID: taskID})
+		t, err := service.MarkTaskNotDone(r.Context(), &todolist.MarkTaskNotDoneRequest{ID: taskID})
 		if err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
@@ -257,12 +257,12 @@ func (s *server) handleTasksMarkNotDone() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusOK, domain.TaskToResponse(*t))
+		s.respond(w, r, http.StatusOK, todolist.TaskToResponse(*t))
 	}
 }
 
 func (s *server) handleTasksDelete() http.HandlerFunc {
-	service := domain.NewTaskService(s.store.Task())
+	service := todolist.NewTaskService(s.store.Task())
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(mux.Vars(r)["user_id"])
@@ -271,7 +271,7 @@ func (s *server) handleTasksDelete() http.HandlerFunc {
 			return
 		}
 
-		u := r.Context().Value(ctxKeyUser).(*domain.User)
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
 		if u.GetID() != userID {
 			s.error(w, r, http.StatusUnprocessableEntity, errNotAuthorized)
 			return
@@ -283,7 +283,7 @@ func (s *server) handleTasksDelete() http.HandlerFunc {
 			return
 		}
 
-		if err := service.DeleteTask(r.Context(), &domain.DeleteTaskRequest{ID: taskID}); err != nil {
+		if err := service.DeleteTask(r.Context(), &todolist.DeleteTaskRequest{ID: taskID}); err != nil {
 			if err == store.ErrRecordNotFound {
 				s.error(w, r, http.StatusNotFound, err)
 			} else {
@@ -298,10 +298,10 @@ func (s *server) handleTasksDelete() http.HandlerFunc {
 }
 
 func (s *server) handleUsersCreate() http.HandlerFunc {
-	service := domain.NewUserService(s.store.User())
+	service := todolist.NewUserService(s.store.User())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &domain.CreateUserRequest{}
+		req := &todolist.CreateUserRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
@@ -313,15 +313,15 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, domain.UserToResponse(*u))
+		s.respond(w, r, http.StatusCreated, todolist.UserToResponse(*u))
 	}
 }
 
 func (s *server) handleUserLogin() http.HandlerFunc {
-	service := domain.NewUserService(s.store.User())
+	service := todolist.NewUserService(s.store.User())
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &domain.AuthenticateUserRequest{}
+		req := &todolist.AuthenticateUserRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
@@ -361,7 +361,7 @@ func (s *server) setRequestID(next http.Handler) http.Handler {
 }
 
 func (s *server) jwtProtectedMiddleware(next http.Handler) http.Handler {
-	service := domain.NewUserService(s.store.User())
+	service := todolist.NewUserService(s.store.User())
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, err := s.jwtService.GetUserIDFromRequest(r)
@@ -370,7 +370,7 @@ func (s *server) jwtProtectedMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		u, err := service.FindUserByID(r.Context(), &domain.FindUserByIDRequest{ID: userID})
+		u, err := service.FindUserByID(r.Context(), &todolist.FindUserByIDRequest{ID: userID})
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
