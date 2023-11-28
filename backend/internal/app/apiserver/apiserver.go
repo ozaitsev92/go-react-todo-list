@@ -47,7 +47,9 @@ func Start(config *Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GracefulTimeout)*time.Second)
 	defer cancel()
 
-	srv.Shutdown(ctx)
+	if err := srv.Shutdown(ctx); err != nil {
+		appServer.logger.Error(err)
+	}
 
 	appServer.logger.Info("shutting down")
 	os.Exit(0)

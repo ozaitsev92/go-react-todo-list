@@ -397,7 +397,7 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 			"completed with %d %s in %v",
 			rw.code,
 			http.StatusText(rw.code),
-			time.Now().Sub(start),
+			time.Since(start),
 		)
 	})
 }
@@ -410,6 +410,8 @@ func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 	w.WriteHeader(code)
 	w.Header().Add("Content-Type", "application/json")
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			s.logger.Error(err)
+		}
 	}
 }

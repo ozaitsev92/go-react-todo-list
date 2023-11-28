@@ -22,16 +22,30 @@ type DBUserRecord struct {
 	UpdatedAt         time.Time
 }
 
-func (r *DBUserRecord) ToUser() *domain.User {
+func (r *DBUserRecord) ToUser() (*domain.User, error) {
 	u := &domain.User{}
 
-	u.SetID(r.ID)
-	u.SetEmail(r.Email)
-	u.SetEncryptedPassword(r.EncryptedPassword)
-	u.SetCreatedAt(r.CreatedAt)
-	u.SetUpdatedAt(r.UpdatedAt)
+	if err := u.SetID(r.ID); err != nil {
+		return nil, err
+	}
 
-	return u
+	if err := u.SetEmail(r.Email); err != nil {
+		return nil, err
+	}
+
+	if err := u.SetEncryptedPassword(r.EncryptedPassword); err != nil {
+		return nil, err
+	}
+
+	if err := u.SetCreatedAt(r.CreatedAt); err != nil {
+		return nil, err
+	}
+
+	if err := u.SetUpdatedAt(r.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (r *UserRepository) SaveUser(ctx context.Context, user *domain.User) error {
@@ -80,7 +94,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 		return nil, err
 	}
 
-	return rec.ToUser(), nil
+	return rec.ToUser()
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -105,5 +119,5 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Us
 		return nil, err
 	}
 
-	return rec.ToUser(), nil
+	return rec.ToUser()
 }

@@ -9,10 +9,10 @@ DB_CONNECTION_STRING ?= "$(DB_TYPE)://$(DB_USER):$(DB_PWD)@$(DB_HOST):5432/$(DB_
 
 .PHONY: build test clean migrate rollback help
 
-build: ## Build a version
+build: lint ## Build a version
 	go build -o ./build/apiserver -v ./cmd/apiserver
 
-run: ## Run the app
+run: build ## Run the app
 	./build/apiserver
 
 test: ## Run all the tests
@@ -33,6 +33,9 @@ migrate: ## Run migrations
 
 rollback: ## Rollback migrations
 	migrate -path migrations -database $(DB_CONNECTION_STRING) down
+
+lint: ## Lint
+	golangci-lint run
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
