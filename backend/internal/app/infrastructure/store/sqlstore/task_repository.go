@@ -22,18 +22,38 @@ type DBTaskRecord struct {
 	UpdatedAt time.Time
 }
 
-func (r *DBTaskRecord) ToTask() *domain.Task {
+func (r *DBTaskRecord) ToTask() (*domain.Task, error) {
 	t := &domain.Task{}
 
-	t.SetID(r.ID)
-	t.SetTaskText(r.TaskText)
-	t.SetTaskOrder(r.TaskOrder)
-	t.SetIsDone(r.IsDone)
-	t.SetUserID(r.UserID)
-	t.SetCreatedAt(r.CreatedAt)
-	t.SetUpdatedAt(r.UpdatedAt)
+	if err := t.SetID(r.ID); err != nil {
+		return nil, err
+	}
 
-	return t
+	if err := t.SetTaskText(r.TaskText); err != nil {
+		return nil, err
+	}
+
+	if err := t.SetTaskOrder(r.TaskOrder); err != nil {
+		return nil, err
+	}
+
+	if err := t.SetIsDone(r.IsDone); err != nil {
+		return nil, err
+	}
+
+	if err := t.SetUserID(r.UserID); err != nil {
+		return nil, err
+	}
+
+	if err := t.SetCreatedAt(r.CreatedAt); err != nil {
+		return nil, err
+	}
+
+	if err := t.SetUpdatedAt(r.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 func (r *TaskRepository) SaveTask(ctx context.Context, task *domain.Task) error {
@@ -85,7 +105,7 @@ func (r *TaskRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Ta
 		return nil, err
 	}
 
-	return rec.ToTask(), nil
+	return rec.ToTask()
 }
 
 func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Task, error) {
@@ -118,7 +138,11 @@ func (r *TaskRepository) GetAllByUserID(ctx context.Context, userID uuid.UUID) (
 			return nil, err
 		}
 
-		tasks = append(tasks, rec.ToTask())
+		if task, err := rec.ToTask(); err == nil {
+			tasks = append(tasks, task)
+		} else {
+			return []*domain.Task{}, nil
+		}
 	}
 
 	return tasks, nil

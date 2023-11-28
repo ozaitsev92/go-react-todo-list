@@ -52,7 +52,7 @@ func TestServer_HandleUsersCreate(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			assert.NoError(t, json.NewEncoder(b).Encode(tc.payload))
 
 			req, _ := http.NewRequest(http.MethodPost, "/users", b)
 
@@ -66,7 +66,7 @@ func TestServer_HandleUserLogin(t *testing.T) {
 	u := domain.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
@@ -103,7 +103,7 @@ func TestServer_HandleUserLogin(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			assert.NoError(t, json.NewEncoder(b).Encode(tc.payload))
 
 			req, _ := http.NewRequest(http.MethodPost, "/login", b)
 
@@ -133,7 +133,7 @@ func TestServer_HandleUserLogout(t *testing.T) {
 	u := domain.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
 	s := newServer(store, jwtService)
@@ -165,7 +165,7 @@ func TestServer_JWTProtectedMiddleware(t *testing.T) {
 	u := domain.TestUser(t, "email@example.com", "a password")
 
 	store := teststore.New()
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	testCases := []struct {
 		name         string
@@ -212,7 +212,7 @@ func TestServer_HandleTasksCreate(t *testing.T) {
 	s := newServer(store, jwtService)
 
 	u := domain.TestUser(t, "email@example.com", "a password")
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
 
 	testCases := []struct {
@@ -248,7 +248,7 @@ func TestServer_HandleTasksCreate(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			assert.NoError(t, json.NewEncoder(b).Encode(tc.payload))
 
 			url := fmt.Sprintf("/users/%s/tasks", u.GetID())
 			req, _ := http.NewRequest(http.MethodPost, url, b)
@@ -266,10 +266,10 @@ func TestServer_HandleTasksGetAllByUser(t *testing.T) {
 	s := newServer(store, jwtService)
 
 	u := domain.TestUser(t, "email@example.com", "a password")
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	task := domain.TestTask(t, "test task", 0, false, u.GetID())
-	store.Task().SaveTask(context.Background(), task)
+	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
 
@@ -289,10 +289,10 @@ func TestServer_HandleTasksMarkAsDone(t *testing.T) {
 	s := newServer(store, jwtService)
 
 	u := domain.TestUser(t, "email@example.com", "a password")
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	task := domain.TestTask(t, "test task", 0, false, u.GetID())
-	store.Task().SaveTask(context.Background(), task)
+	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
 
@@ -312,20 +312,21 @@ func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
 	s := newServer(store, jwtService)
 
 	u := domain.TestUser(t, "email@example.com", "a password")
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	task := domain.TestTask(t, "test task", 0, true, u.GetID())
-	store.Task().SaveTask(context.Background(), task)
+	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
 
 	rec := httptest.NewRecorder()
 
 	b := &bytes.Buffer{}
-	json.NewEncoder(b).Encode(map[string]interface{}{
+	err := json.NewEncoder(b).Encode(map[string]interface{}{
 		"task_text":  "updated task text",
 		"task_order": 10,
 	})
+	assert.NoError(t, err)
 
 	url := fmt.Sprintf("/users/%s/tasks/%s", u.GetID(), task.GetID())
 	req, _ := http.NewRequest(http.MethodPut, url, b)
@@ -341,10 +342,10 @@ func TestServer_HandleTasksDelete(t *testing.T) {
 	s := newServer(store, jwtService)
 
 	u := domain.TestUser(t, "email@example.com", "a password")
-	store.User().SaveUser(context.Background(), u)
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	task := domain.TestTask(t, "test task", 0, true, u.GetID())
-	store.Task().SaveTask(context.Background(), task)
+	assert.NoError(t, store.Task().SaveTask(context.Background(), task))
 
 	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
 

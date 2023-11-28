@@ -27,7 +27,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	assert.Nil(t, u)
 
 	u = domain.TestUser(t, email, "a password")
-	s.User().SaveUser(context.Background(), u)
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 
 	u, err = s.User().FindByEmail(context.Background(), email)
 	assert.NoError(t, err)
@@ -39,7 +39,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 	s := teststore.New()
 
 	u := domain.TestUser(t, "email@example.com", "a password")
-	s.User().SaveUser(context.Background(), u)
+	assert.NoError(t, s.User().SaveUser(context.Background(), u))
 
 	id := u.GetID()
 

@@ -112,7 +112,7 @@ func TestTaskService_UpdateTask(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			task := domain.TestTask(t, "texst text", 1, false, uuid.New())
-			store.SaveTask(context.Background(), task)
+			assert.NoError(t, store.SaveTask(context.Background(), task))
 
 			u, err := service.UpdateTask(context.Background(), tc.r(task.GetID()))
 

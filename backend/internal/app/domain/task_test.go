@@ -68,19 +68,19 @@ func TestTask_Validate(t *testing.T) {
 
 func TestTask_MarkDone(t *testing.T) {
 	task := domain.TestTask(t, "test text", 0, false, uuid.New())
-	task.MarkDone()
+	assert.NoError(t, task.MarkDone())
 	assert.True(t, task.GetIsDone())
 }
 
 func TestTask_MarkNotDone(t *testing.T) {
 	task := domain.TestTask(t, "test text", 0, true, uuid.New())
-	task.MarkNotDone()
+	assert.NoError(t, task.MarkNotDone())
 	assert.False(t, task.GetIsDone())
 }
 
 func TestTask_BeforeUpdate(t *testing.T) {
 	task := domain.TestTask(t, "test text", 0, true, uuid.New())
 	assert.Equal(t, task.GetUpdatedAt(), task.GetCreatedAt())
-	task.BeforeUpdate()
+	assert.NoError(t, task.BeforeUpdate())
 	assert.NotEqual(t, task.GetUpdatedAt(), task.GetCreatedAt())
 }

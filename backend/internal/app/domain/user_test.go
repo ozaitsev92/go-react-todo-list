@@ -72,7 +72,7 @@ func TestUser_Validate(t *testing.T) {
 func TestUser_BeforeUpdate(t *testing.T) {
 	u := domain.TestUser(t, "test text", "test password")
 	assert.Equal(t, u.GetUpdatedAt(), u.GetCreatedAt())
-	u.BeforeUpdate()
+	assert.NoError(t, u.BeforeUpdate())
 	assert.NotEqual(t, u.GetUpdatedAt(), u.GetCreatedAt())
 }
 

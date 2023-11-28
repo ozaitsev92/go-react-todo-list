@@ -119,18 +119,16 @@ func (t *Task) SetUpdatedAt(updatedAt time.Time) error {
 	return nil
 }
 
-func (t *Task) MarkDone() {
-	t.SetIsDone(true)
+func (t *Task) MarkDone() error {
+	return t.SetIsDone(true)
 }
 
-func (t *Task) MarkNotDone() {
-	t.SetIsDone(false)
+func (t *Task) MarkNotDone() error {
+	return t.SetIsDone(false)
 }
 
 func (t *Task) BeforeUpdate() error {
-	t.SetUpdatedAt(time.Now())
-
-	return nil
+	return t.SetUpdatedAt(time.Now())
 }
 
 func (t *Task) Validate() error {

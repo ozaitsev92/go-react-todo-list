@@ -69,8 +69,13 @@ func (ts *TaskService) MarkTaskDone(ctx context.Context, r *MarkTaskDoneRequest)
 		return nil, err
 	}
 
-	t.MarkDone()
-	t.BeforeUpdate()
+	if err := t.MarkDone(); err != nil {
+		return nil, err
+	}
+
+	if err := t.BeforeUpdate(); err != nil {
+		return nil, err
+	}
 
 	if err := t.Validate(); err != nil {
 		return nil, err
@@ -89,8 +94,13 @@ func (ts *TaskService) MarkTaskNotDone(ctx context.Context, r *MarkTaskNotDoneRe
 		return nil, err
 	}
 
-	t.MarkNotDone()
-	t.BeforeUpdate()
+	if err := t.MarkNotDone(); err != nil {
+		return nil, err
+	}
+
+	if err := t.BeforeUpdate(); err != nil {
+		return nil, err
+	}
 
 	if err := t.Validate(); err != nil {
 		return nil, err
