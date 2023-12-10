@@ -1,10 +1,37 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import TodoForm from "./TodoForm";
 import Todo from "./Todo";
 import EditTodoForm from "./EditTodoForm";
+import axios from "../api/axios";
 
 const TodoWrapper = () => {
     const [todos, setTodos] = useState([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
+        const getTodos = async () => {
+            const userID = "1234567890";
+            try {
+                const response = await axios.get(`/users/${userID}/tasks`, {
+                    signal: controller.signal
+                });
+                if (isMounted) {
+                    setTodos(response.data);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+        getTodos();
+
+        return () => {
+            controller.abort();
+            isMounted = false;
+        };
+    }, []);
 
     const addTodo = (todo) => {
         const newTodos = [{

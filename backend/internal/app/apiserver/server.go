@@ -55,21 +55,37 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
+	s.router.Use(handlers.CORS(
+		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
+		handlers.AllowCredentials(),
+	))
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
-	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
-	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods(http.MethodPost)
-	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
-	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
+
+	s.router.HandleFunc("/users", s.handleUsersCreate()).
+		Methods(http.MethodPost, http.MethodOptions)
+	s.router.HandleFunc("/login", s.handleUserLogin()).
+		Methods(http.MethodPost, http.MethodOptions)
+	s.router.HandleFunc("/logout", s.handleUserLogout()).
+		Methods(http.MethodPost, http.MethodOptions)
 
 	tasksSubRouter := s.router.PathPrefix("/users/{user_id}/tasks").Subrouter()
 	tasksSubRouter.Use(s.jwtProtectedMiddleware)
-	tasksSubRouter.HandleFunc("", s.handleTasksCreate()).Methods(http.MethodPost)
-	tasksSubRouter.HandleFunc("", s.handleTasksGetAllByUser()).Methods(http.MethodGet)
-	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksDelete()).Methods(http.MethodDelete)
-	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksUpdate()).Methods(http.MethodPut)
-	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkDone()).Methods(http.MethodPut)
-	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).Methods(http.MethodPut)
+
+	tasksSubRouter.HandleFunc("", s.handleTasksCreate()).
+		Methods(http.MethodPost, http.MethodOptions)
+	tasksSubRouter.HandleFunc("", s.handleTasksGetAllByUser()).
+		Methods(http.MethodGet)
+	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksDelete()).
+		Methods(http.MethodDelete, http.MethodOptions)
+	tasksSubRouter.HandleFunc("/{task_id}", s.handleTasksUpdate()).
+		Methods(http.MethodPut, http.MethodOptions)
+	tasksSubRouter.HandleFunc("/{task_id}/mark-done", s.handleTasksMarkDone()).
+		Methods(http.MethodPut, http.MethodOptions)
+	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).
+		Methods(http.MethodPut, http.MethodOptions)
 }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {

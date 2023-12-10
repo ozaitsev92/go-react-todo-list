@@ -8,7 +8,7 @@ import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
     return (
-        <div className="App">
+        <main className="App">
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<TodoList />} />
@@ -17,7 +17,7 @@ function App() {
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </BrowserRouter>
-        </div>
+        </main>
     );
 }
 
