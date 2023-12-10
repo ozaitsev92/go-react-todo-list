@@ -10,32 +10,32 @@ DB_CONNECTION_STRING ?= "$(DB_TYPE)://$(DB_USER):$(DB_PWD)@$(DB_HOST):5432/$(DB_
 .PHONY: build test clean migrate rollback help
 
 build: lint ## Build a version
-	go build -o ./build/apiserver -v ./cmd/apiserver
+	@go build -o ./bin/apiserver -v ./cmd/apiserver
 
 run: build ## Run the app
-	./build/apiserver
+	@./bin/apiserver
 
 test: ## Run all the tests
-	go test -v -race -timeout 30s ./...
+	@go test -v -race -timeout 30s ./...
 
 clean: ## Remove temporary files
-	go clean
+	@go clean
 
 postgresup: ## Start PostgreSQl server
-	docker run --name todoapp-postgres -e POSTGRES_USER=$(DB_USER) -e POSTGRES_PASSWORD=$(DB_PWD) -e POSTGRES_DB=$(DB_NAME) -p 5432:5432 -d postgres
+	@docker run --name todoapp-postgres -e POSTGRES_USER=$(DB_USER) -e POSTGRES_PASSWORD=$(DB_PWD) -e POSTGRES_DB=$(DB_NAME) -p 5432:5432 -d postgres
 
 postgresdown: ## Stop PostgreSQl server
-	docker stop todoapp-postgres
-	docker rm todoapp-postgres
+	@docker stop todoapp-postgres
+	@docker rm todoapp-postgres
 
 migrate: ## Run migrations
-	migrate -path migrations -database $(DB_CONNECTION_STRING) up
+	@migrate -path migrations -database $(DB_CONNECTION_STRING) up
 
 rollback: ## Rollback migrations
-	migrate -path migrations -database $(DB_CONNECTION_STRING) down
+	@migrate -path migrations -database $(DB_CONNECTION_STRING) down
 
 lint: ## Lint
-	golangci-lint run
+	@golangci-lint run
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
