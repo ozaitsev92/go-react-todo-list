@@ -63,7 +63,6 @@ func (s *server) configureRouter() {
 	))
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
-
 	s.router.HandleFunc("/users", s.handleUsersCreate()).
 		Methods(http.MethodPost, http.MethodOptions)
 	s.router.HandleFunc("/login", s.handleUserLogin()).
@@ -71,9 +70,12 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/logout", s.handleUserLogout()).
 		Methods(http.MethodPost, http.MethodOptions)
 
+	currentUserSubRouter := s.router.PathPrefix("/users-current").Subrouter() //todo: cover with tests
+	currentUserSubRouter.Use(s.jwtProtectedMiddleware)
+	currentUserSubRouter.HandleFunc("", s.handleCurrentUser())
+
 	tasksSubRouter := s.router.PathPrefix("/users/{user_id}/tasks").Subrouter()
 	tasksSubRouter.Use(s.jwtProtectedMiddleware)
-
 	tasksSubRouter.HandleFunc("", s.handleTasksCreate()).
 		Methods(http.MethodPost, http.MethodOptions)
 	tasksSubRouter.HandleFunc("", s.handleTasksGetAllByUser()).
@@ -86,6 +88,13 @@ func (s *server) configureRouter() {
 		Methods(http.MethodPut, http.MethodOptions)
 	tasksSubRouter.HandleFunc("/{task_id}/mark-not-done", s.handleTasksMarkNotDone()).
 		Methods(http.MethodPut, http.MethodOptions)
+}
+
+func (s *server) handleCurrentUser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		u := r.Context().Value(ctxKeyUser).(*todolist.User)
+		s.respond(w, r, http.StatusOK, todolist.UserToResponse(*u))
+	}
 }
 
 func (s *server) handleTasksCreate() http.HandlerFunc {
@@ -336,6 +345,10 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 func (s *server) handleUserLogin() http.HandlerFunc {
 	service := todolist.NewUserService(s.store.User())
 
+	type response struct {
+		AccessToken string `json:"access_token"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &todolist.AuthenticateUserRequest{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -356,8 +369,10 @@ func (s *server) handleUserLogin() http.HandlerFunc {
 			return
 		}
 
+		resp := response{AccessToken: token}
+
 		http.SetCookie(w, s.jwtService.AuthCookie(token))
-		s.respond(w, r, http.StatusOK, nil)
+		s.respond(w, r, http.StatusOK, resp)
 	}
 }
 

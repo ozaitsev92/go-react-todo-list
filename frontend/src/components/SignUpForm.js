@@ -2,10 +2,12 @@
 import React, { useRef, useState, useEffect } from "react";
 import { faCheck, faTimes, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "react-router-dom";
 import axios from "../api/axios";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/;
+const SIGNUP_URL = "/users";
 
 const SignUpForm = () => {
     const emailRef = useRef(null);
@@ -49,17 +51,16 @@ const SignUpForm = () => {
         e.preventDefault();
 
         if (EMAIL_REGEX.test(email) && PASSWORD_REGEX.test(password) && password === matchPassword) {
-            //todo: send request to backend
             try {
-                const response = await axios.post(
-                    "/users",
+                await axios.post(
+                    SIGNUP_URL,
                     JSON.stringify({email, password}),
                     {
                         headers: { "Content-Type": "application/json" },
                         withCredentials: true
                     }
                 );
-                console.log(JSON.stringify(response));
+
                 setEmail("");
                 setPassword("");
                 setMatchPassword("");
@@ -72,11 +73,12 @@ const SignUpForm = () => {
                 } else if (error.response?.status === 409) {
                     setErrMsg("Email already exists.");
                 } else {
-                    setErrMsg("An error occurred.");
+                    setErrMsg("Something went wrong.");
                 }
             }
         } else {
             setErrMsg("Invalid email or password.");
+            setSuccess(false);
         }
     };
 
@@ -196,7 +198,8 @@ const SignUpForm = () => {
                             </button>
                         </form>
                         <p>
-                            Already have an account? <a href="/signin">Sign In</a>
+                            Already have an account?
+                            <Link to="/signin">Sign In</Link>
                         </p>
                     </section>
                 )

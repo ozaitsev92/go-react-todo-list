@@ -1,23 +1,25 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import TodoList from './pages/TodoList';
 import NotFoundPage from './pages/NotFoundPage';
+import Layout from './components/Layout';
+import RequireAuth from './components/RequireAuth';
 
 function App() {
     return (
-        <main className="App">
-            <BrowserRouter>
-                <Routes>
+        <Routes>
+            <Route path="/" element={<Layout />}>
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route element={<RequireAuth />}>
                     <Route path="/" element={<TodoList />} />
-                    <Route path="/signin" element={<SignIn />} />
-                    <Route path="/signup" element={<SignUp />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-            </BrowserRouter>
-        </main>
+                </Route>
+                <Route path="*" element={<NotFoundPage />} />
+            </Route>
+        </Routes>
     );
 }
 

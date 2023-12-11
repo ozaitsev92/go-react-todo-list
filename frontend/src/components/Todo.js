@@ -8,10 +8,10 @@ const Todo = ({todo, toggleComplete, editTodo, deleteTodo}) => {
     return (
         <div className='Todo'>
             <p
-                className={`${todo.completed ? "completed" : ""}`}
+                className={`${todo.is_done ? "completed" : ""}`}
                 onClick={() => toggleComplete(todo.id)}
             >
-                {todo.text}
+                {todo.task_text}
             </p>
             <div>
                 <FontAwesomeIcon icon={faPenToSquare} onClick={() => editTodo(todo.id)} />
