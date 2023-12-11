@@ -206,6 +206,24 @@ func TestServer_JWTProtectedMiddleware(t *testing.T) {
 	}
 }
 
+func TestServer_HandleCurrentUser(t *testing.T) {
+	store := teststore.New()
+	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
+	s := newServer(store, jwtService)
+
+	u := todolist.TestUser(t, "email@example.com", "a password")
+	assert.NoError(t, store.User().SaveUser(context.Background(), u))
+	token, _ := jwtService.CreateJWTTokenForUser(u.GetID())
+
+	rec := httptest.NewRecorder()
+
+	req, _ := http.NewRequest(http.MethodPost, "/users-current", nil)
+	req.Header.Set("Cookie", jwtService.AuthCookie(token).String())
+
+	s.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
 func TestServer_HandleTasksCreate(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
@@ -223,9 +241,9 @@ func TestServer_HandleTasksCreate(t *testing.T) {
 		{
 			name: "valid",
 			payload: map[string]interface{}{
-				"task_text":  "test task",
-				"task_order": 1,
-				"user_id":    u.GetID(),
+				"taskText":  "test task",
+				"taskOrder": 1,
+				"userId":    u.GetID(),
 			},
 			expectedCode: http.StatusCreated,
 		},
@@ -237,7 +255,7 @@ func TestServer_HandleTasksCreate(t *testing.T) {
 		{
 			name: "invalid params",
 			payload: map[string]interface{}{
-				"task_text": "",
+				"taskText": "",
 			},
 			expectedCode: http.StatusUnprocessableEntity,
 		},
@@ -323,8 +341,8 @@ func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
 
 	b := &bytes.Buffer{}
 	err := json.NewEncoder(b).Encode(map[string]interface{}{
-		"task_text":  "updated task text",
-		"task_order": 10,
+		"taskText":  "updated task text",
+		"taskOrder": 10,
 	})
 	assert.NoError(t, err)
 

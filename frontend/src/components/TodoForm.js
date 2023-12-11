@@ -10,7 +10,7 @@ const TodoForm = ({addTodo}) => {
         if (!text) {
             return false;
         }
-        addTodo({task_text: text});
+        addTodo({taskText: text});
         setInput("");
     };
 

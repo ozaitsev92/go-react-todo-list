@@ -34,6 +34,8 @@ const RequireAuth = () => {
         } else {
             setIsLoading(false);
         }
+
+        // eslint-disable-next-line
     }, [auth.user]);
 
     return (

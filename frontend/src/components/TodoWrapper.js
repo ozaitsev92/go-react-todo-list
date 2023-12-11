@@ -53,10 +53,17 @@ const TodoWrapper = () => {
 
         const userID = auth?.user?.id;
 
+        let taskOrder = 0;
+        for (let i = 0; i < todos.length; i++) {
+            if (todos[i].taskOrder > taskOrder) {
+                taskOrder = todos[i].taskOrder + 1;
+            }
+        }
+
         const newTodo = {
-            task_text: todo.task_text,
-            user_id: userID,
-            task_order: 0 //todo: implement task_order
+            taskText: todo.taskText,
+            userId: userID,
+            taskOrder,
         };
 
         try {
@@ -179,7 +186,7 @@ const TodoWrapper = () => {
 
         if (todo) {
             try {
-                todo.task_text = input;
+                todo.taskText = input;
 
                 await axios.put(
                     `/users/${userID}/tasks/${id}`,
