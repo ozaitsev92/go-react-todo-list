@@ -11,7 +11,7 @@ const Todo = ({todo, toggleComplete, editTodo, deleteTodo}) => {
                 className={`${todo.is_done ? "completed" : ""}`}
                 onClick={() => toggleComplete(todo.id)}
             >
-                {todo.task_text}
+                {todo.taskText}
             </p>
             <div>
                 <FontAwesomeIcon icon={faPenToSquare} onClick={() => editTodo(todo.id)} />

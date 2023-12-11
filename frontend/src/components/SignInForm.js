@@ -1,9 +1,10 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { faCheck, faTimes, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "../api/axios";
+import useInput from "../hooks/useInput";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/;
@@ -15,19 +16,13 @@ const SignInForm = () => {
     const location = useLocation();
     const from = location.state?.from?.pathname || "/";
 
-    const [email, setEmail] = useState("");
+    const [email, resetEmail, emailAttrs] = useInput("email", "");
     const [validEmail, setValidEmail] = useState(false);
-    const [emailFocus, setEmailFocus] = useState(false);
 
     const [password, setPassword] = useState("");
     const [validPassword, setValidPassword] = useState(false);
-    const [passwordFocus, setPasswordFocus] = useState(false);
 
     const [errMsg, setErrMsg] = useState("");
-
-    useEffect(() => {
-        emailRef.current.focus();
-    }, []);
 
     useEffect(() => {
         const result = EMAIL_REGEX.test(email);
@@ -63,7 +58,7 @@ const SignInForm = () => {
             try {
                 await doLogin();
 
-                setEmail("");
+                resetEmail("");
                 setPassword("");
                 navigate(from, {replace: true});
             } catch (error) {
@@ -107,21 +102,10 @@ const SignInForm = () => {
                         ref={emailRef}
                         autoComplete="off"
                         placeholder="Email"
-                        value={email}
                         required
-                        onChange={(e) => setEmail(e.target.value)}
-                        onFocus={() => setEmailFocus(true)}
-                        onBlur={() => setEmailFocus(false)}
+                        {...emailAttrs}
                     />
                 </div>
-                {
-                    emailFocus && !validEmail && email.length > 0
-                        ? <p className="info">
-                            <FontAwesomeIcon icon={faInfoCircle} />
-                            Email must be a valid email address.
-                        </p>
-                        : null
-                }
                 <div>
                     <label htmlFor="password">
                         Password:
@@ -139,18 +123,8 @@ const SignInForm = () => {
                         value={password}
                         required
                         onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setPasswordFocus(true)}
-                        onBlur={() => setPasswordFocus(false)}
                     />
                 </div>
-                {
-                    passwordFocus && !validPassword && password.length > 0
-                        ? <p className="info">
-                            <FontAwesomeIcon icon={faInfoCircle} />
-                            Password must be at least 8 characters long, contain at least one lowercase letter, one uppercase letter, and one number.
-                        </p>
-                        : null
-                }
                 <button
                     disabled={!validEmail || !validPassword}
                     type="submit"

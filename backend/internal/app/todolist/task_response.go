@@ -8,12 +8,12 @@ import (
 
 type TaskResponse struct {
 	ID        uuid.UUID `json:"id"`
-	TaskText  string    `json:"task_text"`
+	TaskText  string    `json:"taskText"`
 	TaskOrder int       `json:"order"`
-	IsDone    bool      `json:"is_done"`
-	UserID    uuid.UUID `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	IsDone    bool      `json:"isDone"`
+	UserID    uuid.UUID `json:"userId"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func TaskToResponse(t Task) TaskResponse {

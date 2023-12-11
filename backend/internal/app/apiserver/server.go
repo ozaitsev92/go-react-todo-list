@@ -346,7 +346,7 @@ func (s *server) handleUserLogin() http.HandlerFunc {
 	service := todolist.NewUserService(s.store.User())
 
 	type response struct {
-		AccessToken string `json:"access_token"`
+		AccessToken string `json:"accessToken"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {

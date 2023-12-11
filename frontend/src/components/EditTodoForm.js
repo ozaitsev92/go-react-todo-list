@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import PropTypes from "prop-types";
 
 const EditTodoForm = ({updateTodo, todo}) => {
-    const [input, setInput] = useState(todo.task_text);
+    const [input, setInput] = useState(todo.taskText);
 
     const handleSubmit = (e) => {
         e.preventDefault();
