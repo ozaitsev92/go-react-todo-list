@@ -3,8 +3,13 @@ import TodoForm from "./TodoForm";
 import Todo from "./Todo";
 import EditTodoForm from "./EditTodoForm";
 import axios from "../api/axios";
+import useAuth from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const TodoWrapper = () => {
+    const [errMsg, setErrMsg] = useState("");
+    const navigate = useNavigate();
+    const { auth } = useAuth();
     const [todos, setTodos] = useState([]);
 
     useEffect(() => {
@@ -12,16 +17,26 @@ const TodoWrapper = () => {
         const controller = new AbortController();
 
         const getTodos = async () => {
-            const userID = "1234567890";
+            setErrMsg("");
+            const userID = auth?.user?.id;
+
             try {
                 const response = await axios.get(`/users/${userID}/tasks`, {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true,
                     signal: controller.signal
                 });
                 if (isMounted) {
-                    setTodos(response.data);
+                    setTodos(response.data || []);
                 }
             } catch (error) {
-                console.log(error);
+                if (error?.response) {
+                    if (error.response?.status === 401 || error.response?.status === 403) {
+                        navigate("/signin");
+                    } else {
+                        setErrMsg("Something went wrong.");
+                    }
+                }
             }
         };
 
@@ -31,32 +46,115 @@ const TodoWrapper = () => {
             controller.abort();
             isMounted = false;
         };
-    }, []);
+    }, [auth, navigate]);
 
-    const addTodo = (todo) => {
-        const newTodos = [{
-            id: todos.length + 1,
-            text: todo.text,
-            completed: false,
-            isEditing: false
-        }, ...todos];
-        setTodos(newTodos);
-    };
+    const addTodo = async (todo) => {
+        setErrMsg("");
 
-    const toggleComplete = (id) => {
-        const updatedTodos = todos.slice()
-            .map((todo) => {
-                if (todo.id === id) {
-                    todo.completed = !todo.completed;
+        const userID = auth?.user?.id;
+
+        const newTodo = {
+            task_text: todo.task_text,
+            user_id: userID,
+            task_order: 0 //todo: implement task_order
+        };
+
+        try {
+            await axios.post(
+                `/users/${userID}/tasks`,
+                JSON.stringify(newTodo),
+                {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true
                 }
-                return todo;
+            );
+
+            const response = await axios.get(`/users/${userID}/tasks`, {
+                headers: { "Content-Type": "application/json" },
+                withCredentials: true
             });
-        setTodos(updatedTodos);
+
+            setTodos(response.data || []);
+        } catch (error) {
+            if (error?.response) {
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    navigate("/signin");
+                } else {
+                    setErrMsg("Something went wrong.");
+                }
+            }
+        }
     };
 
-    const deleteTodo = (id) => {
-        const updatedTodos = todos.filter((todo) => todo.id !== id);
-        setTodos(updatedTodos);
+    const toggleComplete = async (id) => {
+        setErrMsg("");
+
+        const userID = auth?.user?.id;
+        const todo = todos.clice()
+            .filter((todo) => todo.id === id)[0];
+
+        if (todo) {
+            try {
+                const url = todo.is_done
+                    ? `/users/${userID}/tasks/${id}/mark-not-done`
+                    : `/users/${userID}/tasks/${id}/mark-done`;
+
+                await axios.put(
+                    url,
+                    null,
+                    {
+                        headers: { "Content-Type": "application/json" },
+                        withCredentials: true
+                    }
+                );
+
+                const response = await axios.get(`/users/${userID}/tasks`, {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true
+                });
+
+                setTodos(response.data || []);
+            } catch (error) {
+                if (error?.response) {
+                    if (error.response?.status === 401 || error.response?.status === 403) {
+                        navigate("/signin");
+                    } else {
+                        setErrMsg("Something went wrong.");
+                    }
+                }
+            }
+        }
+    };
+
+    const deleteTodo = async (id) => {
+        setErrMsg("");
+
+        const userID = auth?.user?.id;
+
+        try {
+            await axios.delete(
+                `/users/${userID}/tasks/${id}`,
+                {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true
+                }
+            );
+
+            const response = await axios.get(`/users/${userID}/tasks`, {
+                headers: { "Content-Type": "application/json" },
+                withCredentials: true
+            });
+
+            setTodos(response.data || []);
+        } catch (error) {
+            if (error?.response) {
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    navigate("/signin");
+                } else {
+                    setErrMsg("Something went wrong.");
+                }
+            }
+        }
     };
 
     const editTodo = (id) => {
@@ -64,33 +162,90 @@ const TodoWrapper = () => {
             .map((todo) => {
                 if (todo.id === id) {
                     todo.isEditing = !todo.isEditing;
+                } else {
+                    todo.isEditing = false;
                 }
                 return todo;
             });
         setTodos(updatedTodos);
     };
 
-    const updateTodo = (input, id) => {
-        const updatedTodos = todos.slice()
-            .map((todo) => {
-                if (todo.id === id) {
-                    todo.text = input;
-                    todo.isEditing = !todo.isEditing;
+    const updateTodo = async (input, id) => {
+        setErrMsg("");
+
+        const userID = auth?.user?.id;
+        const todo = todos.slice()
+            .filter((todo) => todo.id === id)[0];
+
+        if (todo) {
+            try {
+                todo.task_text = input;
+
+                await axios.put(
+                    `/users/${userID}/tasks/${id}`,
+                    JSON.stringify(todo),
+                    {
+                        headers: { "Content-Type": "application/json" },
+                        withCredentials: true
+                    }
+                );
+
+                const response = await axios.get(`/users/${userID}/tasks`, {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true
+                });
+
+                setTodos(response.data || []);
+            } catch (error) {
+                if (error?.response) {
+                    if (error.response?.status === 401 || error.response?.status === 403) {
+                        navigate("/signin");
+                    } else {
+                        setErrMsg("Something went wrong.");
+                    }
                 }
-                return todo;
-            });
-        setTodos(updatedTodos);
+            }
+        }
+    };
+
+    const logout = async () => {
+        setErrMsg("");
+
+        try {
+            await axios.post(
+                "/logout",
+                null,
+                {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true
+                }
+            );
+
+            navigate("/signin");
+        } catch (error) {
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                navigate("/signin");
+            } else {
+                setErrMsg("Something went wrong.");
+            }
+        }
     };
 
     return (
         <div className='TodoWrapper'>
             <h1>What&apos;s the Plan for Today?</h1>
+            {
+                errMsg
+                    ? <p className="error">{errMsg}</p>
+                    : null
+            }
             <TodoForm addTodo={addTodo} />
             {todos.map((todo) => (
                 todo.isEditing
                     ? <EditTodoForm todo={todo} key={todo.id} updateTodo={updateTodo} />
                     : <Todo todo={todo} key={todo.id} toggleComplete={toggleComplete} deleteTodo={deleteTodo} editTodo={editTodo} />
             ))}
+            <button type="link" onClick={logout}>logout</button>
         </div>
     );
 };

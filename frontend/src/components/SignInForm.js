@@ -1,13 +1,19 @@
 
 import React, { useRef, useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { faCheck, faTimes, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import axios from "../api/axios";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/;
+const LOGIN_URL = "/login";
 
 const SignInForm = () => {
     const emailRef = useRef(null);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from?.pathname || "/";
 
     const [email, setEmail] = useState("");
     const [validEmail, setValidEmail] = useState(false);
@@ -18,7 +24,6 @@ const SignInForm = () => {
     const [passwordFocus, setPasswordFocus] = useState(false);
 
     const [errMsg, setErrMsg] = useState("");
-    const [success, setSuccess] = useState(false);
 
     useEffect(() => {
         emailRef.current.focus();
@@ -36,18 +41,44 @@ const SignInForm = () => {
 
     useEffect(() => {
         setErrMsg("");
-        setSuccess(false);
     }, [email, password]);
 
-    const handleSubmit = (e) => {
+    const doLogin = async () => {
+        const response = await axios.post(
+            LOGIN_URL,
+            JSON.stringify({email, password}),
+            {
+                headers: { "Content-Type": "application/json" },
+                withCredentials: true
+            }
+        );
+
+        return response?.data?.access_token;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (EMAIL_REGEX.test(email) && PASSWORD_REGEX.test(password)) {
-            setSuccess(true);
-            //todo: send request to backend
+            try {
+                await doLogin();
+
+                setEmail("");
+                setPassword("");
+                navigate(from, {replace: true});
+            } catch (error) {
+                if (!error?.response) {
+                    setErrMsg("Network error.");
+                } else if (error.response?.status === 400) {
+                    setErrMsg("Missing email or password.");
+                } else if (error.response?.status === 401) {
+                    setErrMsg("Invalid email or password.");
+                } else {
+                    setErrMsg("Something went wrong.");
+                }
+            }
         } else {
             setErrMsg("Invalid email or password.");
-
         }
     };
 
@@ -128,7 +159,8 @@ const SignInForm = () => {
                 </button>
             </form>
             <p>
-                Dont have an account yet? <a href="/signup">Sign Up</a>
+                Don&apos;t have an account yet?
+                <Link to="/signup">Sign Up</Link>
             </p>
         </section>
     );

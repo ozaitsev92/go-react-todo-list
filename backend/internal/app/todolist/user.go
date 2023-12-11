@@ -111,13 +111,13 @@ func (u *User) GetUpdatedAt() time.Time {
 	return u.updatedAt
 }
 
-func (u *User) SetUpdatedAt(createdAt time.Time) error {
-	err := validation.Validate(createdAt, validation.By(timeNotZero))
+func (u *User) SetUpdatedAt(updatedAt time.Time) error {
+	err := validation.Validate(updatedAt, validation.By(timeNotZero))
 	if err != nil {
 		return err
 	}
 
-	u.createdAt = createdAt
+	u.updatedAt = updatedAt
 	return nil
 }
 
