@@ -9,7 +9,7 @@ import (
 type TaskResponse struct {
 	ID        uuid.UUID `json:"id"`
 	TaskText  string    `json:"taskText"`
-	TaskOrder int       `json:"order"`
+	TaskOrder int       `json:"taskOrder"`
 	IsDone    bool      `json:"isDone"`
 	UserID    uuid.UUID `json:"userId"`
 	CreatedAt time.Time `json:"createdAt"`
