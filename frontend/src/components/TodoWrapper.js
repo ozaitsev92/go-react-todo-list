@@ -5,6 +5,11 @@ import EditTodoForm from "./EditTodoForm";
 import axios from "../api/axios";
 import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import Alert from 'react-bootstrap/Alert';
+import Button from 'react-bootstrap/Button';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import ListGroup from 'react-bootstrap/ListGroup';
 
 const TodoWrapper = () => {
     const [errMsg, setErrMsg] = useState("");
@@ -53,12 +58,13 @@ const TodoWrapper = () => {
 
         const userID = auth?.user?.id;
 
-        let taskOrder = 0;
+        let taskOrder = -1;
         for (let i = 0; i < todos.length; i++) {
             if (todos[i].taskOrder > taskOrder) {
-                taskOrder = todos[i].taskOrder + 1;
+                taskOrder = todos[i].taskOrder;
             }
         }
+        taskOrder += 1;
 
         const newTodo = {
             taskText: todo.taskText,
@@ -97,12 +103,12 @@ const TodoWrapper = () => {
         setErrMsg("");
 
         const userID = auth?.user?.id;
-        const todo = todos.clice()
+        const todo = todos.slice()
             .filter((todo) => todo.id === id)[0];
 
         if (todo) {
             try {
-                const url = todo.is_done
+                const url = todo.isDone
                     ? `/users/${userID}/tasks/${id}/mark-not-done`
                     : `/users/${userID}/tasks/${id}/mark-done`;
 
@@ -239,21 +245,57 @@ const TodoWrapper = () => {
     };
 
     return (
-        <div className='TodoWrapper'>
-            <h1>What&apos;s the Plan for Today?</h1>
-            {
-                errMsg
-                    ? <p className="error">{errMsg}</p>
-                    : null
-            }
+        <>
+            <Row>
+                <Col md={{offset: 3, span: 6}} className="text-center">
+                    <h1>What&apos;s the Plan for Today?</h1>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col md={{offset: 3, span: 6}}>
+                    {
+                        errMsg
+                            ? <Alert variant="danger">{errMsg}</Alert>
+                            : null
+                    }
+                </Col>
+            </Row>
+
             <TodoForm addTodo={addTodo} />
-            {todos.map((todo) => (
-                todo.isEditing
-                    ? <EditTodoForm todo={todo} key={todo.id} updateTodo={updateTodo} />
-                    : <Todo todo={todo} key={todo.id} toggleComplete={toggleComplete} deleteTodo={deleteTodo} editTodo={editTodo} />
-            ))}
-            <button type="link" onClick={logout}>logout</button>
-        </div>
+
+            <Row>
+                <Col md={{offset: 3, span: 6}}>
+                    <hr />
+                </Col>
+            </Row>
+
+            <Row className="mb-3">
+                <Col md={{offset: 3, span: 6}}>
+                    <ListGroup>
+                        {todos.map((todo) => (
+                            todo.isEditing
+                                ? (
+                                    <ListGroup.Item key={todo.id}>
+                                        <EditTodoForm todo={todo} key={todo.id} updateTodo={updateTodo} />
+                                    </ListGroup.Item>
+                                )
+                                : (
+                                    <ListGroup.Item key={todo.id}>
+                                        <Todo todo={todo} toggleComplete={toggleComplete} deleteTodo={deleteTodo} editTodo={editTodo} />
+                                    </ListGroup.Item>
+                                )
+                        ))}
+                    </ListGroup>
+                </Col>
+            </Row>
+
+            <Row className="mb-3">
+                <Col md={{offset: 3, span: 6}} className="text-center">
+                    <Button variant="link" className="cursor-pointer" onClick={logout}>logout</Button>
+                </Col>
+            </Row>
+        </>
     );
 };
 

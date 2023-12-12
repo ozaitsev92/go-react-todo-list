@@ -1,9 +1,12 @@
 import React from "react";
+import Container from 'react-bootstrap/Container';
 import TodoWrapper from "../components/TodoWrapper";
 
 const TodoList = () => {
     return (
-        <TodoWrapper />
+        <Container className="mt-5">
+            <TodoWrapper />
+        </Container>
     );
 };
 

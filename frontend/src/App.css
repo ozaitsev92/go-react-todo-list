@@ -1,11 +1,7 @@
-.hide {
-    display: none;
+.completed {
+    text-decoration: line-through;
 }
 
-.valid {
-    color: green;
-}
-
-.invalid {
-    color: red;
+.cursor-pointer {
+    cursor: pointer;
 }

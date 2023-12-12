@@ -10,16 +10,18 @@ import RequireAuth from './components/RequireAuth';
 
 function App() {
     return (
-        <Routes>
-            <Route path="/" element={<Layout />}>
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route element={<RequireAuth />}>
-                    <Route path="/" element={<TodoList />} />
+        <main className="App">
+            <Routes>
+                <Route path="/" element={<Layout />}>
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route element={<RequireAuth />}>
+                        <Route path="/" element={<TodoList />} />
+                    </Route>
+                    <Route path="*" element={<NotFoundPage />} />
                 </Route>
-                <Route path="*" element={<NotFoundPage />} />
-            </Route>
-        </Routes>
+            </Routes>
+        </main>
     );
 }
 

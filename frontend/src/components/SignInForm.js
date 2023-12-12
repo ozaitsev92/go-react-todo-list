@@ -1,8 +1,11 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { faCheck, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Alert from 'react-bootstrap/Alert';
 import axios from "../api/axios";
 import useInput from "../hooks/useInput";
 
@@ -12,6 +15,9 @@ const LOGIN_URL = "/login";
 
 const SignInForm = () => {
     const emailRef = useRef(null);
+
+    const [validated, setValidated] = useState(false);
+
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || "/";
@@ -54,6 +60,13 @@ const SignInForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const form = e.currentTarget;
+        if (form.checkValidity() === false) {
+            e.stopPropagation();
+        }
+
+        setValidated(true);
+
         if (EMAIL_REGEX.test(email) && PASSWORD_REGEX.test(password)) {
             try {
                 await doLogin();
@@ -78,65 +91,73 @@ const SignInForm = () => {
     };
 
     return (
-        <section>
-            <h1>Sign In</h1>
-            {
-                errMsg
-                    ? <p className="error">{errMsg}</p>
-                    : null
-            }
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">
-                        Email:
-                        <span className={validEmail ? "valid" : "hide"}>
-                            <FontAwesomeIcon icon={faCheck} />
-                        </span>
-                        <span className={validEmail || !email ? "hide" : "invalid"}>
-                            <FontAwesomeIcon icon={faTimes} />
-                        </span>
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        ref={emailRef}
-                        autoComplete="off"
-                        placeholder="Email"
-                        required
-                        {...emailAttrs}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="password">
-                        Password:
-                        <span className={validPassword ? "valid" : "hide"}>
-                            <FontAwesomeIcon icon={faCheck} />
-                        </span>
-                        <span className={validPassword || !password ? "hide" : "invalid"}>
-                            <FontAwesomeIcon icon={faTimes} />
-                        </span>
-                    </label>
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder="Password"
-                        value={password}
-                        required
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                </div>
-                <button
-                    disabled={!validEmail || !validPassword}
-                    type="submit"
-                >
-                    Sign In
-                </button>
-            </form>
-            <p>
-                Don&apos;t have an account yet?
-                <Link to="/signup">Sign Up</Link>
-            </p>
-        </section>
+        <>
+            <Row>
+                <Col md={{offset: 3, span: 6}}>
+                    <h1>Sign In</h1>
+                </Col>
+            </Row>
+
+            <Row className="mb-3">
+                <Col md={{offset: 3, span: 6}}>
+                    <Form onSubmit={handleSubmit} validated={validated}>
+                        <Form.Group className="mb-3" controlId="formEmail">
+                            <Form.Label>
+                                Email address
+                            </Form.Label>
+                            <Form.Control
+                                type="email"
+                                ref={emailRef}
+                                autoComplete="off"
+                                placeholder="Email"
+                                required
+                                {...emailAttrs}
+                                isValid={validEmail}
+                                isInvalid={!validEmail && email.length > 0}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3" controlId="formPassword">
+                            <Form.Label>
+                                Password
+                            </Form.Label>
+                            <Form.Control
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                required
+                                onChange={(e) => setPassword(e.target.value)}
+                                isValid={validPassword}
+                                isInvalid={!validPassword && password.length > 0}
+                            />
+                        </Form.Group>
+
+                        { errMsg
+                            ? <Alert variant="danger">{errMsg}</Alert>
+                            : null
+                        }
+
+                        <Row>
+                            <Col md={{offset: 3, span: 6}} className="d-grid">
+                                <Button variant="primary" type="submit" disabled={!validEmail || !validPassword}>
+                                    Sign In
+                                </Button>
+                            </Col>
+                        </Row>
+                    </Form>
+                </Col>
+            </Row>
+
+            <Row className="mb-3">
+                <Col md={{offset: 3, span: 6}} className="text-center">
+                    <p>
+                        Don&apos;t have an account yet?
+                        {" "}
+                        <Link to="/signup">Sign Up</Link>
+                    </p>
+                </Col>
+            </Row>
+        </>
     );
 };
 

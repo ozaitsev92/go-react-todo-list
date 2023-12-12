@@ -1,5 +1,7 @@
 import React, {useState} from "react";
 import PropTypes from "prop-types";
+import Form from 'react-bootstrap/Form';
+import FloatingLabel from 'react-bootstrap/FloatingLabel';
 
 const EditTodoForm = ({updateTodo, todo}) => {
     const [input, setInput] = useState(todo.taskText);
@@ -15,24 +17,20 @@ const EditTodoForm = ({updateTodo, todo}) => {
     };
 
     return (
-        <form
-            className='TodoForm'
-            onSubmit={handleSubmit}
-        >
-            <input
-                type='text'
-                className='todo-input'
-                placeholder='Update task'
-                onChange={(e) => setInput(e.target.value)}
-                value={input}
-            />
-            <button
-                type='submit'
-                className='todo-btn'
+        <Form onSubmit={handleSubmit}>
+            <FloatingLabel
+                controlId="todo-input"
+                label="Type your task here and press Enter"
             >
-                Update Task
-            </button>
-        </form>
+                <Form.Control
+                    type='text'
+                    className='todo-input'
+                    placeholder='Type your task here and press Enter'
+                    onChange={(e) => setInput(e.target.value)}
+                    value={input}
+                />
+            </FloatingLabel>
+        </Form>
     );
 };
 
