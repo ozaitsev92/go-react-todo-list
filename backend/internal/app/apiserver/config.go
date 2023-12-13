@@ -13,6 +13,7 @@ type Config struct {
 	JWTSessionLength int    `toml:"jwt_session_length"`
 	JWTCookieDomain  string `toml:"jwt_cookie_domain"`
 	JWTSecureCookie  bool   `toml:"jwt_secure_cookie"`
+	AllowedOrigin    string `toml:"allowed_origin"`
 }
 
 func NewConfig() *Config {

@@ -18,7 +18,7 @@ import (
 
 func TestServer_HandleUsersCreate(t *testing.T) {
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(teststore.New(), jwtService)
+	s := newServer(teststore.New(), jwtService, &Config{})
 
 	testCases := []struct {
 		name         string
@@ -69,7 +69,7 @@ func TestServer_HandleUserLogin(t *testing.T) {
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	testCases := []struct {
 		name         string
@@ -136,7 +136,7 @@ func TestServer_HandleUserLogout(t *testing.T) {
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
 
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	rec := httptest.NewRecorder()
 
@@ -185,7 +185,7 @@ func TestServer_JWTProtectedMiddleware(t *testing.T) {
 	}
 
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -209,7 +209,7 @@ func TestServer_JWTProtectedMiddleware(t *testing.T) {
 func TestServer_HandleCurrentUser(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -227,7 +227,7 @@ func TestServer_HandleCurrentUser(t *testing.T) {
 func TestServer_HandleTasksCreate(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -281,7 +281,7 @@ func TestServer_HandleTasksCreate(t *testing.T) {
 func TestServer_HandleTasksGetAllByUser(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -304,7 +304,7 @@ func TestServer_HandleTasksGetAllByUser(t *testing.T) {
 func TestServer_HandleTasksMarkAsDone(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -327,7 +327,7 @@ func TestServer_HandleTasksMarkAsDone(t *testing.T) {
 func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))
@@ -357,7 +357,7 @@ func TestServer_HandleTasksMarkAsNotDone(t *testing.T) {
 func TestServer_HandleTasksDelete(t *testing.T) {
 	store := teststore.New()
 	jwtService := jwt.NewJWTService([]byte("test"), 30, "localhost", true)
-	s := newServer(store, jwtService)
+	s := newServer(store, jwtService, &Config{})
 
 	u := todolist.TestUser(t, "email@example.com", "a password")
 	assert.NoError(t, store.User().SaveUser(context.Background(), u))

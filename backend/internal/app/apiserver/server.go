@@ -37,7 +37,7 @@ type server struct {
 	jwtService *jwt.JWTService
 }
 
-func newServer(store store.Store, jwtService *jwt.JWTService) *server {
+func newServer(store store.Store, jwtService *jwt.JWTService, config *Config) *server {
 	s := &server{
 		router:     mux.NewRouter(),
 		logger:     logrus.New(),
@@ -45,7 +45,7 @@ func newServer(store store.Store, jwtService *jwt.JWTService) *server {
 		jwtService: jwtService,
 	}
 
-	s.configureRouter()
+	s.configureRouter(config)
 
 	return s
 }
@@ -54,9 +54,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func (s *server) configureRouter() {
+func (s *server) configureRouter(config *Config) {
 	s.router.Use(handlers.CORS(
-		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+		handlers.AllowedOrigins([]string{config.AllowedOrigin}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
 		handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
 		handlers.AllowCredentials(),
@@ -70,7 +70,7 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/logout", s.handleUserLogout()).
 		Methods(http.MethodPost, http.MethodOptions)
 
-	currentUserSubRouter := s.router.PathPrefix("/users-current").Subrouter() //todo: cover with tests
+	currentUserSubRouter := s.router.PathPrefix("/users-current").Subrouter()
 	currentUserSubRouter.Use(s.jwtProtectedMiddleware)
 	currentUserSubRouter.HandleFunc("", s.handleCurrentUser())
 
