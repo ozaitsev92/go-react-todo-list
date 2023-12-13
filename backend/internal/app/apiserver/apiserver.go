@@ -22,7 +22,7 @@ func Start(config *Config) {
 	defer db.Close()
 	store := sqlstore.New(db)
 	jwtService := jwt.NewJWTService([]byte(config.JWTSigningKey), config.JWTSessionLength, config.JWTCookieDomain, config.JWTSecureCookie)
-	appServer := newServer(store, jwtService)
+	appServer := newServer(store, jwtService, config)
 
 	srv := &http.Server{
 		Addr:         config.BindAddr,
