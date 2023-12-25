@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 const getLocalValue = (key, initValue) => {
-    if (!localStorage) {
+    if (typeof window === "undefined") {
         return initValue;
     }
 
-    const localValue = JSON.parse(localStorage.getItem(key));
+    const localValue = JSON.parse(window.localStorage.getItem(key));
 
     if (localValue) {
         return localValue;
@@ -16,16 +16,16 @@ const getLocalValue = (key, initValue) => {
     }
 
     return initValue;
-}
+};
 
 const useLocalStorage = (key, initValue) => {
     const [value, setValue] = useState(() => getLocalValue(key, initValue));
 
     useEffect(() => {
-        if (localStorage) {
-            localStorage.setItem('user', JSON.stringify(value));
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem("user", JSON.stringify(value));
         }
-    }, [key, value])
+    }, [key, value]);
 
     return [value, setValue];
 };

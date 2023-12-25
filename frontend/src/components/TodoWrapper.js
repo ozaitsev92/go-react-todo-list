@@ -1,15 +1,15 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import TodoForm from "./TodoForm";
 import Todo from "./Todo";
 import EditTodoForm from "./EditTodoForm";
 import axios from "../api/axios";
 import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import Alert from 'react-bootstrap/Alert';
-import Button from 'react-bootstrap/Button';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import ListGroup from 'react-bootstrap/ListGroup';
+import Alert from "react-bootstrap/Alert";
+import Button from "react-bootstrap/Button";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import ListGroup from "react-bootstrap/ListGroup";
 
 const TodoWrapper = () => {
     const [errMsg, setErrMsg] = useState("");
@@ -31,6 +31,7 @@ const TodoWrapper = () => {
                     withCredentials: true,
                     signal: controller.signal
                 });
+
                 if (isMounted) {
                     setTodos(response.data || []);
                 }
@@ -53,7 +54,7 @@ const TodoWrapper = () => {
         };
     }, [auth, navigate]);
 
-    const addTodo = async (todo) => {
+    const addTodo = useCallback(async (todo) => {
         setErrMsg("");
 
         const userID = auth?.user?.id;
@@ -69,7 +70,7 @@ const TodoWrapper = () => {
         const newTodo = {
             taskText: todo.taskText,
             userId: userID,
-            taskOrder,
+            taskOrder
         };
 
         try {
@@ -97,9 +98,9 @@ const TodoWrapper = () => {
                 }
             }
         }
-    };
+    }, [auth, todos]);
 
-    const toggleComplete = async (id) => {
+    const toggleComplete = useCallback(async (id) => {
         setErrMsg("");
 
         const userID = auth?.user?.id;
@@ -137,9 +138,9 @@ const TodoWrapper = () => {
                 }
             }
         }
-    };
+    }, [auth, todos]);
 
-    const deleteTodo = async (id) => {
+    const deleteTodo = useCallback(async (id) => {
         setErrMsg("");
 
         const userID = auth?.user?.id;
@@ -168,9 +169,9 @@ const TodoWrapper = () => {
                 }
             }
         }
-    };
+    }, [auth]);
 
-    const editTodo = (id) => {
+    const editTodo = useCallback((id) => {
         const updatedTodos = todos.slice()
             .map((todo) => {
                 if (todo.id === id) {
@@ -181,9 +182,20 @@ const TodoWrapper = () => {
                 return todo;
             });
         setTodos(updatedTodos);
-    };
+    }, [todos]);
 
-    const updateTodo = async (input, id) => {
+    const closeOnEsc = useCallback((e) => {
+        if (e.key === "Escape") {
+            const updatedTodos = todos.slice()
+                .map((todo) => {
+                    todo.isEditing = false;
+                    return todo;
+                });
+            setTodos(updatedTodos);
+        }
+    }, [todos]);
+
+    const updateTodo = useCallback(async (input, id) => {
         setErrMsg("");
 
         const userID = auth?.user?.id;
@@ -219,9 +231,9 @@ const TodoWrapper = () => {
                 }
             }
         }
-    };
+    }, [auth, todos]);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         setErrMsg("");
 
         try {
@@ -242,7 +254,7 @@ const TodoWrapper = () => {
                 setErrMsg("Something went wrong.");
             }
         }
-    };
+    }, []);
 
     return (
         <>
@@ -277,7 +289,7 @@ const TodoWrapper = () => {
                             todo.isEditing
                                 ? (
                                     <ListGroup.Item key={todo.id}>
-                                        <EditTodoForm todo={todo} key={todo.id} updateTodo={updateTodo} />
+                                        <EditTodoForm todo={todo} key={todo.id} updateTodo={updateTodo} closeOnEsc={closeOnEsc} />
                                     </ListGroup.Item>
                                 )
                                 : (

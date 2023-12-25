@@ -3,12 +3,12 @@ import PropTypes from "prop-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenToSquare } from "@fortawesome/free-regular-svg-icons";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
 
 const Todo = ({todo, toggleComplete, editTodo, deleteTodo}) => {
     return (
-        <Row style={{justifyContent: 'space-between'}}>
+        <Row style={{justifyContent: "space-between"}}>
             <Col sm="auto">
                 <span
                     className={`${todo.isDone ? "completed" : ""} cursor-pointer`}

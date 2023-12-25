@@ -34,5 +34,10 @@
         "semi-spacing": "error",
         "no-redeclare": "error",
         "curly": "warn"
+    },
+    "globals": {
+        "window": "readonly",
+        "AbortController": "readonly",
+        "process": "readonly"
     }
 }

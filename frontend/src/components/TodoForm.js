@@ -1,14 +1,15 @@
-import React, {useState} from "react";
+import React, { useCallback, useState, useId } from "react";
 import PropTypes from "prop-types";
-import Form from 'react-bootstrap/Form';
-import FloatingLabel from 'react-bootstrap/FloatingLabel';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
+import Form from "react-bootstrap/Form";
+import FloatingLabel from "react-bootstrap/FloatingLabel";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
 
 const TodoForm = ({addTodo}) => {
     const [input, setInput] = useState("");
+    const formID = useId();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = useCallback((e) => {
         e.preventDefault();
         const text = input.trim();
         if (!text) {
@@ -16,14 +17,14 @@ const TodoForm = ({addTodo}) => {
         }
         addTodo({taskText: text});
         setInput("");
-    };
+    }, [addTodo, input]);
 
     return (
         <Row>
             <Col md={{offset: 3, span: 6}}>
                 <Form onSubmit={handleSubmit}>
                     <FloatingLabel
-                        controlId="todo-input"
+                        controlId={formID + "-todo-input"}
                         label="Type your task here and press Enter"
                     >
                         <Form.Control

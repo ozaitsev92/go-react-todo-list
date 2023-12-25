@@ -1,11 +1,11 @@
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback, useId } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Alert from 'react-bootstrap/Alert';
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Alert from "react-bootstrap/Alert";
 import axios from "../api/axios";
 import useInput from "../hooks/useInput";
 
@@ -14,6 +14,7 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/;
 const LOGIN_URL = "/login";
 
 const SignInForm = () => {
+    const formID = useId();
     const emailRef = useRef(null);
 
     const [validated, setValidated] = useState(false);
@@ -44,20 +45,7 @@ const SignInForm = () => {
         setErrMsg("");
     }, [email, password]);
 
-    const doLogin = async () => {
-        const response = await axios.post(
-            LOGIN_URL,
-            JSON.stringify({email, password}),
-            {
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true
-            }
-        );
-
-        return response?.data?.access_token;
-    };
-
-    const handleSubmit = async (e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
 
         const form = e.currentTarget;
@@ -69,7 +57,14 @@ const SignInForm = () => {
 
         if (EMAIL_REGEX.test(email) && PASSWORD_REGEX.test(password)) {
             try {
-                await doLogin();
+                await axios.post(
+                    LOGIN_URL,
+                    JSON.stringify({email, password}),
+                    {
+                        headers: { "Content-Type": "application/json" },
+                        withCredentials: true
+                    }
+                );
 
                 resetEmail("");
                 setPassword("");
@@ -88,7 +83,7 @@ const SignInForm = () => {
         } else {
             setErrMsg("Invalid email or password.");
         }
-    };
+    }, [email, password, from, resetEmail]);
 
     return (
         <>
@@ -101,7 +96,7 @@ const SignInForm = () => {
             <Row className="mb-3">
                 <Col md={{offset: 3, span: 6}}>
                     <Form onSubmit={handleSubmit} validated={validated}>
-                        <Form.Group className="mb-3" controlId="formEmail">
+                        <Form.Group className="mb-3" controlId={formID + "-form-email"}>
                             <Form.Label>
                                 Email address
                             </Form.Label>
@@ -117,7 +112,7 @@ const SignInForm = () => {
                             />
                         </Form.Group>
 
-                        <Form.Group className="mb-3" controlId="formPassword">
+                        <Form.Group className="mb-3" controlId={formID + "-form-password"}>
                             <Form.Label>
                                 Password
                             </Form.Label>
