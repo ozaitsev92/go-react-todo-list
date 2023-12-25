@@ -11,18 +11,25 @@ const RequireAuth = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
         const getCurrentUser = async () => {
             try {
                 const response = await axios.get(
                     CURRENT_USER_URL,
                     {
                         headers: { "Content-Type": "application/json" },
-                        withCredentials: true
+                        withCredentials: true,
+                        signal: controller.signal
                     }
                 );
 
-                const user = response?.data;
-                setAuth({user});
+                if (isMounted) {
+                    const user = response?.data;
+                    setAuth({user});
+                }
+
                 setIsLoading(false);
             } catch (error) {
                 setIsLoading(false);
@@ -35,8 +42,11 @@ const RequireAuth = () => {
             setIsLoading(false);
         }
 
-        // eslint-disable-next-line
-    }, [auth.user]);
+        return () => {
+            controller.abort();
+            isMounted = false;
+        };
+    }, [auth.user, location.pathname]);
 
     return (
         <>

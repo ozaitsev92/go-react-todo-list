@@ -1,13 +1,13 @@
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback, useId } from "react";
 import { faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Alert from 'react-bootstrap/Alert';
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Alert from "react-bootstrap/Alert";
 import axios from "../api/axios";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -15,6 +15,7 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/;
 const SIGNUP_URL = "/users";
 
 const SignUpForm = () => {
+    const formID = useId();
     const emailRef = useRef(null);
 
     const [validated, setValidated] = useState(false);
@@ -54,7 +55,7 @@ const SignUpForm = () => {
         setErrMsg("");
     }, [email, password, matchPassword]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
 
         const form = e.currentTarget;
@@ -94,7 +95,7 @@ const SignUpForm = () => {
             setErrMsg("Invalid email or password.");
             setSuccess(false);
         }
-    };
+    }, [email, password, matchPassword]);
 
     return (
         <>
@@ -121,11 +122,11 @@ const SignUpForm = () => {
                                 <h1>Sign Up</h1>
                             </Col>
                         </Row>
-    
+
                         <Row className="mb-3">
                             <Col md={{offset: 3, span: 6}}>
                                 <Form onSubmit={handleSubmit} validated={validated}>
-                                    <Form.Group className="mb-3" controlId="email">
+                                    <Form.Group className="mb-3" controlId={formID + "-form-email"}>
                                         <Form.Label>
                                             Email address
                                         </Form.Label>
@@ -154,7 +155,7 @@ const SignUpForm = () => {
                                         </Form.Text>
                                     </Form.Group>
 
-                                    <Form.Group className="mb-3" controlId="formPassword">
+                                    <Form.Group className="mb-3" controlId={formID + "-form-password"}>
                                         <Form.Label>
                                             Password
                                         </Form.Label>
@@ -181,7 +182,7 @@ const SignUpForm = () => {
                                         </Form.Text>
                                     </Form.Group>
 
-                                    <Form.Group className="mb-3" controlId="formMatchPassword">
+                                    <Form.Group className="mb-3" controlId={formID + "-form-match-password"}>
                                         <Form.Label>
                                             Confirm Password
                                         </Form.Label>
