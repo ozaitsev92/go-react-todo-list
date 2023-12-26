@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-import axios from "../api/axios";
+import axios from "../lib/axios";
 
 const CURRENT_USER_URL = "/users-current";
 
@@ -46,7 +46,7 @@ const RequireAuth = () => {
             controller.abort();
             isMounted = false;
         };
-    }, [auth.user, location.pathname]);
+    }, [auth.user, location.pathname, setAuth]);
 
     return (
         <>
