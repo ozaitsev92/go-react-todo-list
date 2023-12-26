@@ -13,6 +13,7 @@ const Todo = ({todo, toggleComplete, editTodo, deleteTodo}) => {
                 <span
                     className={`${todo.isDone ? "completed" : ""} cursor-pointer`}
                     onClick={() => toggleComplete(todo.id)}
+                    data-testid={`todo-text-${todo.id}`}
                 >
                     {todo.taskText}
                 </span>

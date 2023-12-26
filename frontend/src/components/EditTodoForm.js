@@ -9,7 +9,7 @@ const EditTodoForm = ({updateTodo, closeOnEsc, todo}) => {
     const [inputRef, setInputFocus] = useFocus();
     const formID = useId();
 
-    useEffect(() => setInputFocus(), []);
+    useEffect(() => setInputFocus(), [setInputFocus]);
 
     const handleSubmit = useCallback((e) => {
         e.preventDefault();
@@ -25,13 +25,13 @@ const EditTodoForm = ({updateTodo, closeOnEsc, todo}) => {
         <Form onSubmit={handleSubmit}>
             <FloatingLabel
                 controlId={formID + "-todo-input"}
-                label="Type your task here and press Enter"
+                label="Type your task here and press Enter or press ESC to cancel"
             >
                 <Form.Control
                     type='text'
                     ref={inputRef}
                     className='todo-input'
-                    placeholder='Type your task here and press Enter'
+                    placeholder='Type your task here and press Enter or press ESC to cancel'
                     onChange={(e) => setInput(e.target.value)}
                     onKeyUp={(e) => closeOnEsc(e)}
                     value={input}

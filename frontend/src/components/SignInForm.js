@@ -6,7 +6,7 @@ import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Alert from "react-bootstrap/Alert";
-import axios from "../api/axios";
+import axios from "../lib/axios";
 import useInput from "../hooks/useInput";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -83,7 +83,7 @@ const SignInForm = () => {
         } else {
             setErrMsg("Invalid email or password.");
         }
-    }, [email, password, from, resetEmail]);
+    }, [email, password, from, resetEmail, navigate]);
 
     return (
         <>

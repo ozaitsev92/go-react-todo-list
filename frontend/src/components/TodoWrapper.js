@@ -2,7 +2,7 @@ import React, {useState, useEffect, useCallback} from "react";
 import TodoForm from "./TodoForm";
 import Todo from "./Todo";
 import EditTodoForm from "./EditTodoForm";
-import axios from "../api/axios";
+import axios from "../lib/axios";
 import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import Alert from "react-bootstrap/Alert";
@@ -98,7 +98,7 @@ const TodoWrapper = () => {
                 }
             }
         }
-    }, [auth, todos]);
+    }, [auth, todos, navigate]);
 
     const toggleComplete = useCallback(async (id) => {
         setErrMsg("");
@@ -138,7 +138,7 @@ const TodoWrapper = () => {
                 }
             }
         }
-    }, [auth, todos]);
+    }, [auth, todos, navigate]);
 
     const deleteTodo = useCallback(async (id) => {
         setErrMsg("");
@@ -169,7 +169,7 @@ const TodoWrapper = () => {
                 }
             }
         }
-    }, [auth]);
+    }, [auth, navigate]);
 
     const editTodo = useCallback((id) => {
         const updatedTodos = todos.slice()
@@ -231,7 +231,7 @@ const TodoWrapper = () => {
                 }
             }
         }
-    }, [auth, todos]);
+    }, [auth, todos, navigate]);
 
     const logout = useCallback(async () => {
         setErrMsg("");
@@ -254,7 +254,7 @@ const TodoWrapper = () => {
                 setErrMsg("Something went wrong.");
             }
         }
-    }, []);
+    }, [navigate]);
 
     return (
         <>
