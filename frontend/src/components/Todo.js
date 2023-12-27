@@ -20,9 +20,19 @@ const Todo = ({todo, toggleComplete, editTodo, deleteTodo}) => {
             </Col>
             <Col sm="auto">
                 <span>
-                    <FontAwesomeIcon className="cursor-pointer" icon={faPenToSquare} onClick={() => editTodo(todo.id)} />
+                    <FontAwesomeIcon
+                        className="cursor-pointer"
+                        icon={faPenToSquare}
+                        onClick={() => editTodo(todo.id)}
+                        data-testid={`todo-edit-${todo.id}`}
+                    />
                     {" "}
-                    <FontAwesomeIcon className="cursor-pointer" icon={faTrashAlt} onClick={() => deleteTodo(todo.id)} />
+                    <FontAwesomeIcon
+                        className="cursor-pointer"
+                        icon={faTrashAlt}
+                        onClick={() => deleteTodo(todo.id)}
+                        data-testid={`todo-delete-${todo.id}`}
+                    />
                 </span>
             </Col>
         </Row>
