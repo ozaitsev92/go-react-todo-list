@@ -18,6 +18,7 @@ const TodoWrapper = () => {
     const [todos, setTodos] = useState([]);
 
     useEffect(() => {
+
         let isMounted = true;
         const controller = new AbortController();
 
@@ -288,12 +289,18 @@ const TodoWrapper = () => {
                         {todos.map((todo) => (
                             todo.isEditing
                                 ? (
-                                    <ListGroup.Item key={todo.id}>
+                                    <ListGroup.Item
+                                        key={todo.id}
+                                        data-testid={`todo-item-${todo.id}`}
+                                    >
                                         <EditTodoForm todo={todo} key={todo.id} updateTodo={updateTodo} closeOnEsc={closeOnEsc} />
                                     </ListGroup.Item>
                                 )
                                 : (
-                                    <ListGroup.Item key={todo.id}>
+                                    <ListGroup.Item
+                                        key={todo.id}
+                                        data-testid={`todo-item-${todo.id}`}
+                                    >
                                         <Todo todo={todo} toggleComplete={toggleComplete} deleteTodo={deleteTodo} editTodo={editTodo} />
                                     </ListGroup.Item>
                                 )

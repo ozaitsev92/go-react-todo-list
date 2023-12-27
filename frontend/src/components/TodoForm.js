@@ -19,19 +19,30 @@ const TodoForm = ({addTodo}) => {
         setInput("");
     }, [addTodo, input]);
 
+    const clearOnEsc = useCallback((e) => {
+        if (e.key === "Escape") {
+            setInput("");
+            e.target.blur();
+        }
+    });
+
     return (
         <Row>
             <Col md={{offset: 3, span: 6}}>
-                <Form onSubmit={handleSubmit}>
+                <Form
+                    onSubmit={handleSubmit}
+                    data-testid="todo-form"
+                >
                     <FloatingLabel
                         controlId={formID + "-todo-input"}
-                        label="Type your task here and press Enter"
+                        label="Type your task and press Enter or press ESC to cancel"
                     >
                         <Form.Control
                             type='text'
                             className='todo-input'
-                            placeholder='Type your task here and press Enter'
+                            placeholder='Type your task and press Enter or press ESC to cancel'
                             onChange={(e) => setInput(e.target.value)}
+                            onKeyUp={(e) => clearOnEsc(e)}
                             value={input}
                         />
                     </FloatingLabel>

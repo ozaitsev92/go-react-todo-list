@@ -22,16 +22,19 @@ const EditTodoForm = ({updateTodo, closeOnEsc, todo}) => {
     }, [updateTodo, todo, input]);
 
     return (
-        <Form onSubmit={handleSubmit}>
+        <Form
+            onSubmit={handleSubmit}
+            data-testid="todo-form"
+        >
             <FloatingLabel
                 controlId={formID + "-todo-input"}
-                label="Type your task here and press Enter or press ESC to cancel"
+                label="Type your task and press Enter or press ESC to cancel"
             >
                 <Form.Control
                     type='text'
                     ref={inputRef}
                     className='todo-input'
-                    placeholder='Type your task here and press Enter or press ESC to cancel'
+                    placeholder='Type your task and press Enter or press ESC to cancel'
                     onChange={(e) => setInput(e.target.value)}
                     onKeyUp={(e) => closeOnEsc(e)}
                     value={input}

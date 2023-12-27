@@ -6,7 +6,7 @@ COPY . .
 
 ENV NODE_ENV production
 
-RUN npm ci
+RUN npm install
 RUN npm run build
 
 FROM nginx:alpine
@@ -19,11 +19,3 @@ COPY nginx.conf /etc/nginx/conf.d
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
-
-
-
-
-
-# EXPOSE 3000
-
-# CMD [ "npx", "serve", "build" ]
