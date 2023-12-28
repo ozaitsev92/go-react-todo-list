@@ -30,9 +30,13 @@ const MockedAuthProvider = () => {
 }
 
 describe('TodoWrapper', () => {
-    it('should have a valid form', async () => {
+    it('should render a todo list', async () => {
         render(<MockedAuthProvider />);
-        const formEl = await screen.findByTestId(/todo-item-1/i);
-        expect(formEl).toBeInTheDocument();
+
+        const todoEl1 = await screen.findByText("Test task 1");
+        expect(todoEl1).toBeInTheDocument();
+
+        const todoEl2 = await screen.findByText("Test task 1");
+        expect(todoEl2).toBeInTheDocument();
     });
 });
