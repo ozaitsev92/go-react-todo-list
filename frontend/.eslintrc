@@ -38,6 +38,7 @@
     "globals": {
         "window": "readonly",
         "AbortController": "readonly",
-        "process": "readonly"
+        "process": "readonly",
+        "jest": "readonly"
     }
 }

@@ -95,10 +95,14 @@ const SignInForm = () => {
 
             <Row className="mb-3">
                 <Col md={{offset: 3, span: 6}}>
-                    <Form onSubmit={handleSubmit} validated={validated}>
+                    <Form
+                        onSubmit={handleSubmit}
+                        validated={validated}
+                        data-testid="signin-form"
+                    >
                         <Form.Group className="mb-3" controlId={formID + "-form-email"}>
                             <Form.Label>
-                                Email address
+                                Email
                             </Form.Label>
                             <Form.Control
                                 type="email"
