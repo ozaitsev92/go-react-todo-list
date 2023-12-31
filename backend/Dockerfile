@@ -1,31 +1,16 @@
-FROM golang:latest AS builder
+FROM golang:latest as build
 
-COPY . /app
-WORKDIR /app
-RUN ls
+WORKDIR /go/src/app
+COPY . .
+RUN ls -la
+RUN pwd
 
-RUN CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "-static"' -o /app/appbin ./cmd/apiserver
+RUN go mod download
+RUN CGO_ENABLED=0 go build -o /go/bin/app /go/src/app/cmd/apiserver/
 
-FROM debian:stable-slim
-LABEL MAINTAINER Author ozaitsev92@gmail.com
+FROM gcr.io/distroless/static-debian11
+COPY --from=build /go/bin/app /
+COPY configs /configs
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates  \
-        netbase \
-    && rm -rf /var/lib/apt/lists/ \
-    && apt-get autoremove -y && apt-get autoclean -y
-
-RUN adduser --home "/appuser" --disabled-password appuser --gecos "appuser,-,-,-"
-USER appuser
-
-RUN mkdir -p /appuser/app
-
-COPY --from=builder /app/appbin /appuser/app
-COPY configs /appuser/app/configs
-
-WORKDIR /appuser/app
-
-EXPOSE 8000
-
-CMD ["./appbin"]
+EXPOSE 8080
+CMD ["/app"]
