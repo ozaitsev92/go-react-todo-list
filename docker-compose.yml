@@ -12,6 +12,11 @@ services:
       POSTGRES_DB: todo_db
     networks:
       - todoapp_network
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U user -d todo_db'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   todoapp_client:
     container_name: todoapp_client

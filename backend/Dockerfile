@@ -11,6 +11,7 @@ RUN CGO_ENABLED=0 go build -o /go/bin/app /go/src/app/cmd/apiserver/
 FROM gcr.io/distroless/static-debian11
 COPY --from=build /go/bin/app /
 COPY configs /configs
+COPY migrations /migrations
 
 EXPOSE 8080
 CMD ["/app"]

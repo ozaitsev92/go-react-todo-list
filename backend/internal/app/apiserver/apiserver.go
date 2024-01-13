@@ -11,6 +11,11 @@ import (
 
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/apiserver/jwt"
 	"github.com/ozaitsev92/go-react-todo-list/internal/app/infrastructure/store/sqlstore"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
 func Start(config *Config) {
@@ -20,6 +25,21 @@ func Start(config *Config) {
 	}
 
 	defer db.Close()
+
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m, err := migrate.NewWithDatabaseInstance("file:///migrations", "postgres", driver)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := m.Up(); err != nil {
+		log.Fatal(err)
+	}
+
 	store := sqlstore.New(db)
 	jwtService := jwt.NewJWTService([]byte(config.JWTSigningKey), config.JWTSessionLength, config.JWTCookieDomain, config.JWTSecureCookie)
 	appServer := newServer(store, jwtService, config)
