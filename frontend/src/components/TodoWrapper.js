@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import TodoForm from "./TodoForm";
 import Todo from "./Todo";
 import EditTodoForm from "./EditTodoForm";
@@ -10,6 +10,9 @@ import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import ListGroup from "react-bootstrap/ListGroup";
+
+const TASKS_URL = "/v1/tasks";
+const LOGOUT_URL = "/v1/users/logout";
 
 const TodoWrapper = () => {
     const [errMsg, setErrMsg] = useState("");
@@ -27,7 +30,7 @@ const TodoWrapper = () => {
             const userID = auth?.user?.id;
 
             try {
-                const response = await axios.get(`/users/${userID}/tasks`, {
+                const response = await axios.get(TASKS_URL, {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true,
                     signal: controller.signal
@@ -76,7 +79,7 @@ const TodoWrapper = () => {
 
         try {
             await axios.post(
-                `/users/${userID}/tasks`,
+                TASKS_URL,
                 JSON.stringify(newTodo),
                 {
                     headers: { "Content-Type": "application/json" },
@@ -84,7 +87,7 @@ const TodoWrapper = () => {
                 }
             );
 
-            const response = await axios.get(`/users/${userID}/tasks`, {
+            const response = await axios.get(TASKS_URL, {
                 headers: { "Content-Type": "application/json" },
                 withCredentials: true
             });
@@ -104,15 +107,14 @@ const TodoWrapper = () => {
     const toggleComplete = useCallback(async (id) => {
         setErrMsg("");
 
-        const userID = auth?.user?.id;
         const todo = todos.slice()
             .filter((todo) => todo.id === id)[0];
 
         if (todo) {
             try {
                 const url = todo.isDone
-                    ? `/users/${userID}/tasks/${id}/mark-not-done`
-                    : `/users/${userID}/tasks/${id}/mark-done`;
+                    ? `${TASKS_URL}/${id}/mark-not-completed`
+                    : `${TASKS_URL}/${id}/mark-completed`;
 
                 await axios.put(
                     url,
@@ -123,7 +125,7 @@ const TodoWrapper = () => {
                     }
                 );
 
-                const response = await axios.get(`/users/${userID}/tasks`, {
+                const response = await axios.get(TASKS_URL, {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true
                 });
@@ -144,18 +146,16 @@ const TodoWrapper = () => {
     const deleteTodo = useCallback(async (id) => {
         setErrMsg("");
 
-        const userID = auth?.user?.id;
-
         try {
             await axios.delete(
-                `/users/${userID}/tasks/${id}`,
+                `${TASKS_URL}/${id}`,
                 {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true
                 }
             );
 
-            const response = await axios.get(`/users/${userID}/tasks`, {
+            const response = await axios.get(TASKS_URL, {
                 headers: { "Content-Type": "application/json" },
                 withCredentials: true
             });
@@ -199,7 +199,6 @@ const TodoWrapper = () => {
     const updateTodo = useCallback(async (input, id) => {
         setErrMsg("");
 
-        const userID = auth?.user?.id;
         const todo = todos.slice()
             .filter((todo) => todo.id === id)[0];
 
@@ -208,7 +207,7 @@ const TodoWrapper = () => {
                 todo.taskText = input;
 
                 await axios.put(
-                    `/users/${userID}/tasks/${id}`,
+                    `${TASKS_URL}/${id}`,
                     JSON.stringify(todo),
                     {
                         headers: { "Content-Type": "application/json" },
@@ -216,7 +215,7 @@ const TodoWrapper = () => {
                     }
                 );
 
-                const response = await axios.get(`/users/${userID}/tasks`, {
+                const response = await axios.get(TASKS_URL, {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true
                 });
@@ -239,7 +238,7 @@ const TodoWrapper = () => {
 
         try {
             await axios.post(
-                "/logout",
+                LOGOUT_URL,
                 null,
                 {
                     headers: { "Content-Type": "application/json" },
@@ -260,13 +259,13 @@ const TodoWrapper = () => {
     return (
         <>
             <Row>
-                <Col md={{offset: 3, span: 6}} className="text-center">
+                <Col md={{ offset: 3, span: 6 }} className="text-center">
                     <h1>What&apos;s the Plan for Today?</h1>
                 </Col>
             </Row>
 
             <Row>
-                <Col md={{offset: 3, span: 6}}>
+                <Col md={{ offset: 3, span: 6 }}>
                     {
                         errMsg
                             ? <Alert variant="danger">{errMsg}</Alert>
@@ -278,13 +277,13 @@ const TodoWrapper = () => {
             <TodoForm addTodo={addTodo} />
 
             <Row>
-                <Col md={{offset: 3, span: 6}}>
+                <Col md={{ offset: 3, span: 6 }}>
                     <hr />
                 </Col>
             </Row>
 
             <Row className="mb-3">
-                <Col md={{offset: 3, span: 6}}>
+                <Col md={{ offset: 3, span: 6 }}>
                     <ListGroup>
                         {todos.map((todo) => (
                             todo.isEditing
@@ -310,7 +309,7 @@ const TodoWrapper = () => {
             </Row>
 
             <Row className="mb-3">
-                <Col md={{offset: 3, span: 6}} className="text-center">
+                <Col md={{ offset: 3, span: 6 }} className="text-center">
                     <Button variant="link" className="cursor-pointer" onClick={logout}>logout</Button>
                 </Col>
             </Row>

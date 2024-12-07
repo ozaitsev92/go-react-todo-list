@@ -3,7 +3,7 @@ import { useLocation, Navigate, Outlet } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "../lib/axios";
 
-const CURRENT_USER_URL = "/users-current";
+const CURRENT_USER_URL = "/v1/users/current";
 
 const RequireAuth = () => {
     const { auth, setAuth } = useAuth();
@@ -27,7 +27,7 @@ const RequireAuth = () => {
 
                 if (isMounted) {
                     const user = response?.data;
-                    setAuth({user});
+                    setAuth({ user });
                 }
 
                 setIsLoading(false);
@@ -54,7 +54,7 @@ const RequireAuth = () => {
                 <div>Loading...</div>
             ) : (
                 !auth.user && location.pathname !== "/signin" ? (
-                    <Navigate to="/signin" state={{from: location}} replace />
+                    <Navigate to="/signin" state={{ from: location }} replace />
                 ) : (
                     <Outlet />
                 )

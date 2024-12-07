@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/ozaitsev92/tododdd/internal/controller/http/v1/jwt"
 	"github.com/ozaitsev92/tododdd/internal/controller/http/v1/middleware"
 	"github.com/ozaitsev92/tododdd/internal/controller/http/v1/model"
-	"github.com/ozaitsev92/tododdd/internal/domain/user"
 	"github.com/ozaitsev92/tododdd/internal/usecase"
 	"github.com/ozaitsev92/tododdd/pkg/logger"
 )
@@ -18,7 +18,7 @@ type userRoutes struct {
 	u          *usecase.UserUseCase
 }
 
-// todo: too many params
+// todo: refactor. too many params
 func newUserRoutes(handler *gin.RouterGroup, l logger.Interface, jwtService *jwt.JWTService, u *usecase.UserUseCase) {
 	r := &userRoutes{l, jwtService, u}
 
@@ -125,17 +125,19 @@ func (r *userRoutes) logoutUser(c *gin.Context) {
 }
 
 func (r *userRoutes) currentUser(c *gin.Context) {
-	u, ok := c.Get("user")
-	r.l.Error(u)
-	if !ok {
+	id := c.GetString("userID")
+	if id == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Error": "Unauthorized"})
 
 		return
 	}
 
-	if uu, ok := u.(user.User); ok {
-		c.JSON(http.StatusOK, model.ToResponseFromUser(uu))
-	} else {
+	u, err := r.u.GetUserByID(c.Request.Context(), uuid.MustParse(id))
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Error": "Unauthorized"})
+
+		return
 	}
+
+	c.JSON(http.StatusOK, model.ToResponseFromUser(u))
 }
