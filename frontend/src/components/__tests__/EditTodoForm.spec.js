@@ -5,8 +5,8 @@ import EditTodoForm from '../EditTodoForm';
 describe('EditTodoForm', () => {
     const todo = {
         id: 1,
-        taskText: 'Lorem Ipsum',
-        isDone: false,
+        text: 'Lorem Ipsum',
+        completed: false,
         isEditing: true
     };
     const updateTodo = jest.fn();
@@ -32,7 +32,7 @@ describe('EditTodoForm', () => {
         expect(inputEl).toBeInTheDocument();
 
         inputEl.focus();
-        fireEvent.change(inputEl, {target: {value: ''}})
+        fireEvent.change(inputEl, { target: { value: '' } })
         fireEvent.submit(screen.getByTestId(/todo-form/i));
 
         expect(updateTodo).not.toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe('EditTodoForm', () => {
         expect(inputEl).toBeInTheDocument();
 
         inputEl.focus();
-        fireEvent.change(inputEl, {target: {value: 'Learn React'}})
+        fireEvent.change(inputEl, { target: { value: 'Learn React' } })
         fireEvent.submit(screen.getByTestId(/todo-form/i));
 
         expect(updateTodo).toHaveBeenCalledWith('Learn React', todo.id);
@@ -54,7 +54,7 @@ describe('EditTodoForm', () => {
         expect(inputEl).toBeInTheDocument();
 
         inputEl.focus();
-        fireEvent.keyUp(inputEl, {key: 'Escape', code: 'Escape', keyCode: 27, charCode: 27});
+        fireEvent.keyUp(inputEl, { key: 'Escape', code: 'Escape', keyCode: 27, charCode: 27 });
 
         expect(closeOnEsc).toHaveBeenCalled();
     });

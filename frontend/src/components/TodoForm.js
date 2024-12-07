@@ -5,7 +5,7 @@ import FloatingLabel from "react-bootstrap/FloatingLabel";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
-const TodoForm = ({addTodo}) => {
+const TodoForm = ({ addTodo }) => {
     const [input, setInput] = useState("");
     const formID = useId();
 
@@ -15,7 +15,7 @@ const TodoForm = ({addTodo}) => {
         if (!text) {
             return false;
         }
-        addTodo({taskText: text});
+        addTodo({ text: text });
         setInput("");
     }, [addTodo, input]);
 
@@ -28,7 +28,7 @@ const TodoForm = ({addTodo}) => {
 
     return (
         <Row>
-            <Col md={{offset: 3, span: 6}}>
+            <Col md={{ offset: 3, span: 6 }}>
                 <Form
                     onSubmit={handleSubmit}
                     data-testid="todo-form"

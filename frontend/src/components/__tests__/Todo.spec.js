@@ -5,15 +5,15 @@ import Todo from '../Todo';
 describe('Todo', () => {
     const todo = {
         id: 1,
-        taskText: 'Learn React',
-        isDone: false
+        text: 'Learn React',
+        completed: false
     };
     const editTodo = jest.fn();
     const deleteTodo = jest.fn();
     const toggleComplete = jest.fn();
 
     beforeEach(() => {
-        render(<Todo todo={todo} editTodo={editTodo} deleteTodo={deleteTodo} toggleComplete={toggleComplete}/>);
+        render(<Todo todo={todo} editTodo={editTodo} deleteTodo={deleteTodo} toggleComplete={toggleComplete} />);
     });
 
     it('should have a text field', () => {
@@ -29,7 +29,7 @@ describe('Todo', () => {
         fireEvent.click(editIconEl);
         expect(editTodo).toHaveBeenCalledWith(1);
     });
-    
+
     it('should have a delete button', () => {
         const deleteIconEl = screen.getByTestId(/todo-delete-1/i);
         expect(deleteIconEl).toBeInTheDocument();

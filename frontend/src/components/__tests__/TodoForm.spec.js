@@ -25,7 +25,7 @@ describe('TodoForm', () => {
         expect(inputEl).toBeInTheDocument();
 
         inputEl.focus();
-        fireEvent.change(inputEl, {target: {value: ''}})
+        fireEvent.change(inputEl, { target: { value: '' } })
         fireEvent.submit(screen.getByTestId(/todo-form/i));
 
         expect(addTodo).not.toHaveBeenCalled();
@@ -36,9 +36,9 @@ describe('TodoForm', () => {
         expect(inputEl).toBeInTheDocument();
 
         inputEl.focus();
-        fireEvent.change(inputEl, {target: {value: 'Learn React'}})
+        fireEvent.change(inputEl, { target: { value: 'Learn React' } })
         fireEvent.submit(screen.getByTestId(/todo-form/i));
 
-        expect(addTodo).toHaveBeenCalledWith({taskText: 'Learn React'});
+        expect(addTodo).toHaveBeenCalledWith({ text: 'Learn React' });
     });
 });

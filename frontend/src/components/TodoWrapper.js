@@ -27,7 +27,6 @@ const TodoWrapper = () => {
 
         const getTodos = async () => {
             setErrMsg("");
-            const userID = auth?.user?.id;
 
             try {
                 const response = await axios.get(TASKS_URL, {
@@ -61,20 +60,8 @@ const TodoWrapper = () => {
     const addTodo = useCallback(async (todo) => {
         setErrMsg("");
 
-        const userID = auth?.user?.id;
-
-        let taskOrder = -1;
-        for (let i = 0; i < todos.length; i++) {
-            if (todos[i].taskOrder > taskOrder) {
-                taskOrder = todos[i].taskOrder;
-            }
-        }
-        taskOrder += 1;
-
         const newTodo = {
-            taskText: todo.taskText,
-            userId: userID,
-            taskOrder
+            text: todo.text,
         };
 
         try {
@@ -112,7 +99,7 @@ const TodoWrapper = () => {
 
         if (todo) {
             try {
-                const url = todo.isDone
+                const url = todo.completed
                     ? `${TASKS_URL}/${id}/mark-not-completed`
                     : `${TASKS_URL}/${id}/mark-completed`;
 
@@ -204,7 +191,7 @@ const TodoWrapper = () => {
 
         if (todo) {
             try {
-                todo.taskText = input;
+                todo.text = input;
 
                 await axios.put(
                     `${TASKS_URL}/${id}`,
