@@ -30,7 +30,7 @@ const MockedAuthProvider = () => {
 }
 
 describe('TodoWrapper', () => {
-    it('should render a todo list', async () => {
+    it('should render a TODO App', async () => {
         render(<MockedAuthProvider />);
 
         const todoEl1 = await screen.findByText("Test task 1");

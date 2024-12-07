@@ -4,8 +4,8 @@ import Form from "react-bootstrap/Form";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
 import useFocus from "../hooks/useFocus";
 
-const EditTodoForm = ({updateTodo, closeOnEsc, todo}) => {
-    const [input, setInput] = useState(todo.taskText);
+const EditTodoForm = ({ updateTodo, closeOnEsc, todo }) => {
+    const [input, setInput] = useState(todo.text);
     const [inputRef, setInputFocus] = useFocus();
     const formID = useId();
 

@@ -1,23 +1,5 @@
 version: "3.9"
 services:
-  # todoapp_postgres:
-  #   container_name: todoapp_postgres
-  #   image: postgres
-  #   restart: always
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: user
-  #     POSTGRES_PASSWORD: password
-  #     POSTGRES_DB: todo_db
-  #   networks:
-  #     - todoapp_network
-  #   healthcheck:
-  #     test: [ "CMD-SHELL", "sh -c 'pg_isready -U user -d todo_db'" ]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 3
-
   todoapp_client:
     container_name: todoapp_client
     restart: always
@@ -36,11 +18,20 @@ services:
     restart: always
     build:
       dockerfile: Dockerfile
-      context: backend-new
+      context: backend
     ports:
       - "8080:8080"
-    # depends_on:
-    #   - todoapp_postgres
+    depends_on:
+      - todoapp_mongodb
+    networks:
+      - todoapp_network
+
+  todoapp_mongodb:
+    container_name: todoapp_mongodb
+    restart: always
+    image: mongo:latest
+    ports:
+      - "27017:27017"
     networks:
       - todoapp_network
 

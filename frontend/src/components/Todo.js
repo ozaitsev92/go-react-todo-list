@@ -6,16 +6,16 @@ import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
-const Todo = ({todo, toggleComplete, editTodo, deleteTodo}) => {
+const Todo = ({ todo, toggleComplete, editTodo, deleteTodo }) => {
     return (
-        <Row style={{justifyContent: "space-between"}}>
+        <Row style={{ justifyContent: "space-between" }}>
             <Col sm="auto">
                 <span
-                    className={`${todo.isDone ? "completed" : ""} cursor-pointer`}
+                    className={`${todo.completed ? "completed" : ""} cursor-pointer`}
                     onClick={() => toggleComplete(todo.id)}
                     data-testid={`todo-text-${todo.id}`}
                 >
-                    {todo.taskText}
+                    {todo.text}
                 </span>
             </Col>
             <Col sm="auto">

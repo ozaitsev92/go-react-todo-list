@@ -2,19 +2,17 @@ const mockTodoResponse = {
     data: [
         {
             id: 1,
-            taskText: "Test task 1",
-            isDone: false,
-            userId: 1,
+            text: "Test task 1",
+            completed: false,
+            user_id: 1,
             isEditing: false,
-            taskOrder: 1
         },
         {
             id: 2,
-            taskText: "Test task 2",
-            isDone: true,
-            userId: 1,
+            text: "Test task 2",
+            completed: true,
+            user_id: 1,
             isEditing: false,
-            taskOrder: 2
         }
     ]
 };
