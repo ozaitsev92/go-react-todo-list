@@ -11,7 +11,7 @@ import useInput from "../hooks/useInput";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})/;
-const LOGIN_URL = "/login";
+const LOGIN_URL = "/v1/users/login";
 
 const SignInForm = () => {
     const formID = useId();
@@ -59,7 +59,7 @@ const SignInForm = () => {
             try {
                 await axios.post(
                     LOGIN_URL,
-                    JSON.stringify({email, password}),
+                    JSON.stringify({ email, password }),
                     {
                         headers: { "Content-Type": "application/json" },
                         withCredentials: true
@@ -68,7 +68,7 @@ const SignInForm = () => {
 
                 resetEmail("");
                 setPassword("");
-                navigate(from, {replace: true});
+                navigate(from, { replace: true });
             } catch (error) {
                 if (!error?.response) {
                     setErrMsg("Network error.");
@@ -88,13 +88,13 @@ const SignInForm = () => {
     return (
         <>
             <Row>
-                <Col md={{offset: 3, span: 6}}>
+                <Col md={{ offset: 3, span: 6 }}>
                     <h1>Sign In</h1>
                 </Col>
             </Row>
 
             <Row className="mb-3">
-                <Col md={{offset: 3, span: 6}}>
+                <Col md={{ offset: 3, span: 6 }}>
                     <Form
                         onSubmit={handleSubmit}
                         validated={validated}
@@ -131,13 +131,13 @@ const SignInForm = () => {
                             />
                         </Form.Group>
 
-                        { errMsg
+                        {errMsg
                             ? <Alert variant="danger">{errMsg}</Alert>
                             : null
                         }
 
                         <Row>
-                            <Col md={{offset: 3, span: 6}} className="d-grid">
+                            <Col md={{ offset: 3, span: 6 }} className="d-grid">
                                 <Button variant="primary" type="submit" disabled={!validEmail || !validPassword}>
                                     Sign In
                                 </Button>
@@ -148,7 +148,7 @@ const SignInForm = () => {
             </Row>
 
             <Row className="mb-3">
-                <Col md={{offset: 3, span: 6}} className="text-center">
+                <Col md={{ offset: 3, span: 6 }} className="text-center">
                     <p>
                         Don&apos;t have an account yet?
                         {" "}

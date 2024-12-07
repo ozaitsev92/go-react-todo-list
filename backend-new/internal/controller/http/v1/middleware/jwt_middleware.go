@@ -24,7 +24,7 @@ func JwtMiddleware(u *usecase.UserUseCase, jwtService *jwt.JWTService) gin.Handl
 			return
 		}
 
-		c.Set("user", u)
+		c.Set("userID", u.ID.String())
 
 		c.Next()
 	}

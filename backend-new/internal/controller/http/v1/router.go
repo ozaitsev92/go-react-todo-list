@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// todo: too many params
+// todo: refactor. too many params
 func NewRouter(handler *gin.Engine, l logger.Interface, jwtService *jwt.JWTService, t *usecase.TaskUseCase, u *usecase.UserUseCase) {
 	// Options
 	handler.Use(gin.Logger())
@@ -25,7 +25,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, jwtService *jwt.JWTServi
 	// Routers
 	h := handler.Group("/v1")
 	{
-		newTaskRoutes(h, l, jwtService, t)
+		newTaskRoutes(h, l, jwtService, u, t)
 		newUserRoutes(h, l, jwtService, u)
 	}
 }
