@@ -59,8 +59,8 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (user.User, e
 }
 
 func (r *Repository) Save(ctx context.Context, t user.User) error {
-	mongoItem := converter.ToRepoFromUser(t)
-	_, err := r.collection.InsertOne(ctx, mongoItem)
+	mongoUser := converter.ToRepoFromUser(t)
+	_, err := r.collection.InsertOne(ctx, mongoUser)
 	if err != nil {
 		return user.ErrFailedToStoreUser
 	}
