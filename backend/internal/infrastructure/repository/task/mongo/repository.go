@@ -42,10 +42,6 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (task.Task, erro
 }
 
 func (r *Repository) GetAllByUserID(ctx context.Context, userId uuid.UUID) ([]task.Task, error) {
-	// filter := bson.M{"user_id": userId.String()}
-	// sort := bson.D{{Name: "created_at", Value: 1}}
-	// opts := options.Find().SetSort(sort)
-
 	filter := bson.M{"user_id": userId.String()}
 	sort := options.Find().SetSort(bson.M{"created_at": 1})
 
