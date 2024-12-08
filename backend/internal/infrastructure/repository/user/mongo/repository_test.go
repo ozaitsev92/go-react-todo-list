@@ -37,7 +37,6 @@ func TestMain(m *testing.M) {
 
 	err = pool.Retry(func() error {
 		MONGODB_PORT = resource.GetPort("27017/tcp")
-		// ping to ensure that the server is up and running
 		_, err := net.Dial("tcp", net.JoinHostPort("localhost", MONGODB_PORT))
 		return err
 	})
@@ -48,7 +47,6 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
 		log.Fatalf("Could not purge resource: %s", err)
 	}
