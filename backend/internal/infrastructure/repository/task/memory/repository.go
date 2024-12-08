@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/google/uuid"
@@ -55,6 +56,8 @@ func (r *Repository) GetAllByUserID(_ context.Context, userId uuid.UUID) ([]task
 			tasks = append(tasks, converter.ToTaskFromRepo(ti))
 		}
 	}
+
+	sort.Slice(tasks, func(i, j int) bool { return tasks[i].CreatedAt.UnixNano() < tasks[j].CreatedAt.UnixNano() })
 
 	return tasks, nil
 }
