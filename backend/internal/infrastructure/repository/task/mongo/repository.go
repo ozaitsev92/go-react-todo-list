@@ -35,7 +35,10 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (task.Task, erro
 
 	err := r.collection.FindOne(ctx, bson.M{"_id": id.String()}).Decode(&mongoTask)
 	if err != nil {
-		return converter.ToTaskFromRepo(mongoTask), err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return task.Task{}, task.ErrTaskNotFound
+		}
+		return task.Task{}, err
 	}
 
 	return converter.ToTaskFromRepo(mongoTask), nil
@@ -47,6 +50,9 @@ func (r *Repository) GetAllByUserID(ctx context.Context, userId uuid.UUID) ([]ta
 
 	cursor, err := r.collection.Find(ctx, filter, sort)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return []task.Task{}, task.ErrTaskNotFound
+		}
 		return []task.Task{}, err
 	}
 
