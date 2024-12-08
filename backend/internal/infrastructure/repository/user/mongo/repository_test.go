@@ -159,10 +159,10 @@ func TestRepositorySave(t *testing.T) {
 	r := repository.NewRepository(cfg)
 	err = r.Save(context.Background(), u)
 	if err != nil {
-		t.Errorf("Save() got = '%v', want = '%v'", err, nil)
+		t.Errorf("Save() err = '%v'", err)
 	}
 
-	// Check if a user exists in the DB: should fail
+	// Check if a user exists in the DB: should succeed
 	err = collection.FindOne(context.Background(), bson.M{"email": u.Email}).Decode(&mongoUser)
 	if err != nil {
 		t.Errorf("Save() failed to create a new user: err = '%v'", err)
