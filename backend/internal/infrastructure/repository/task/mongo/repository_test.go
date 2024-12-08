@@ -16,7 +16,6 @@ import (
 	"github.com/ozaitsev92/tododdd/internal/domain/user"
 	repository "github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo"
 	"github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo/converter"
-	"github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo/model"
 	repoModel "github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo/model"
 	"github.com/ozaitsev92/tododdd/pkg/mongodb"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -198,11 +197,11 @@ func TestRepositorySave(t *testing.T) {
 		t.Errorf("Save() failed to create a new task: err = '%v'", err)
 	}
 
-	var mongotask repoModel.Task
+	var mongoTask repoModel.Task
 	collection := mongodb.NewOrGetSingleton(cfg).Collection("tasks")
 
 	// Check if a task exists in the DB: should fail
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongotask)
+	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
 	if !errors.Is(err, mongo.ErrNoDocuments) {
 		t.Errorf("Save() got = '%v', want = '%v'", err, user.ErrUserNotFound)
 	}
@@ -215,12 +214,12 @@ func TestRepositorySave(t *testing.T) {
 	}
 
 	// Check if a user exists in the DB: should succeed
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongotask)
+	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
 	if err != nil {
 		t.Errorf("Save() failed to create a new user: err = '%v'", err)
 	}
 
-	fountTask := converter.ToTaskFromRepo(mongotask)
+	fountTask := converter.ToTaskFromRepo(mongoTask)
 
 	if fountTask.ID != ti.ID {
 		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.ID, ti.ID)
@@ -258,13 +257,12 @@ func TestRepositoryUpdate(t *testing.T) {
 		t.Errorf("Update() err = '%v'", err)
 	}
 
-	var mongotask model.Task
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongotask)
+	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
 	if err != nil {
 		t.Errorf("Save() failed to create a new user: err = '%v'", err)
 	}
 
-	fountTask := converter.ToTaskFromRepo(mongotask)
+	fountTask := converter.ToTaskFromRepo(mongoTask)
 
 	if fountTask.ID != ti.ID {
 		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.ID, ti.ID)
@@ -305,8 +303,7 @@ func TestRepositoryDelete(t *testing.T) {
 	}
 
 	// Check if a task exists in the DB: should fail
-	var mongotask repoModel.Task
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongotask)
+	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
 	if !errors.Is(err, mongo.ErrNoDocuments) {
 		t.Errorf("Save() got = '%v', want = '%v'", err, user.ErrUserNotFound)
 	}
