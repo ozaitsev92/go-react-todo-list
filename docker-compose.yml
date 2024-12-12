@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       context: frontend
     ports:
-      - "3000:80"
+      - "8081:80"
     depends_on:
       - todoapp_server
     networks:
@@ -35,5 +35,36 @@ services:
     networks:
       - todoapp_network
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    networks:
+      - todoapp_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - todoapp_network
+
 networks:
   todoapp_network:
+
+volumes:
+  prometheus:
+    driver: local
+  grafana:
+    driver: local

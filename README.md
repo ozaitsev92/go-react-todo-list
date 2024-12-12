@@ -20,4 +20,4 @@ Simple TODO app build with Go, React and MongoDB.
 ---
 
 ### Usage
-Run `make start` to run the app. The app is available at http://localhost:3000.
+Run `make start` to run the app. The app is available at http://localhost:8081.

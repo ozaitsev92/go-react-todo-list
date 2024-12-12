@@ -2,8 +2,6 @@ FROM golang:1.23.3 as build
 
 WORKDIR /go/src/app
 COPY . .
-RUN ls -la
-RUN pwd
 
 RUN go mod download
 RUN CGO_ENABLED=0 go build -o /go/bin/app /go/src/app/cmd/app/
