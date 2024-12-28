@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import TodoForm from "./TodoForm";
 import Todo from "./Todo";
 import EditTodoForm from "./EditTodoForm";
@@ -61,7 +61,7 @@ const TodoWrapper = () => {
         setErrMsg("");
 
         const newTodo = {
-            text: todo.text,
+            text: todo.text
         };
 
         try {

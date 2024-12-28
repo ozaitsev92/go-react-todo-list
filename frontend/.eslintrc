@@ -1,5 +1,13 @@
 {
-    "parser": "babel-eslint",
+    "parser": "@babel/eslint-parser",
+    "settings": {
+        "react": {
+          "version": "18.2"
+        }
+    },
+    "parserOptions": {
+        "requireConfigFile": false
+    },
     "extends": [
         "eslint:recommended",
         "plugin:react/recommended",
@@ -19,6 +27,7 @@
                 "typeof": false
             }
         ],
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
         "indent": ["error", 4],
         "linebreak-style": ["error", "unix"],
         "comma-dangle": ["error", "never"],

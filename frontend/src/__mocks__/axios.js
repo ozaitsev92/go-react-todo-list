@@ -5,14 +5,14 @@ const mockTodoResponse = {
             text: "Test task 1",
             completed: false,
             user_id: 1,
-            isEditing: false,
+            isEditing: false
         },
         {
             id: 2,
             text: "Test task 2",
             completed: true,
             user_id: 1,
-            isEditing: false,
+            isEditing: false
         }
     ]
 };

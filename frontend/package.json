@@ -15,7 +15,8 @@
     "react-bootstrap": "^2.9.1",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
-    "react-scripts": "^3.0.1",
+    "react-scripts": "^5.0.1",
+    "remove": "^0.1.5",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -23,8 +24,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
     "eject": "react-scripts eject",
-    "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix"
+    "lint": "NODE_ENV=development eslint src/**/*.js",
+    "lint:fix": "NODE_ENV=development eslint src/**/*.js --fix"
   },
   "eslintConfig": {
     "extends": [
@@ -45,10 +46,20 @@
     ]
   },
   "devDependencies": {
-    "eslint-plugin-react": "^7.33.2",
-    "jest-environment-jsdom-sixteen": "^1.0.3",
+    "@babel/eslint-parser": "^7.25.9",
+    "@babel/plugin-transform-class-properties": "^7.25.9",
+    "@babel/plugin-transform-nullish-coalescing-operator": "^7.25.9",
+    "@babel/plugin-transform-numeric-separator": "^7.25.9",
+    "@babel/plugin-transform-optional-chaining": "^7.25.9",
+    "@babel/plugin-transform-private-methods": "^7.25.9",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0"
+    "@testing-library/user-event": "^13.5.0",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react": "^7.33.2",
+    "graceful-fs": "^4.2.11",
+    "jest-environment-jsdom-sixteen": "^1.0.3",
+    "webpack": "^5.97.1"
   }
 }
