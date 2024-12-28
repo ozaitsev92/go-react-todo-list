@@ -44,6 +44,14 @@ jobs:
           MONGO_URI: mongodb://localhost:27017
         run: go test -v ./...
 
+      - name: Debug Secrets
+        run: |
+          echo "DOCKER_USERNAME: ${DOCKER_USERNAME:-not set}"
+          echo "DOCKER_TOKEN is set: ${DOCKER_TOKEN:+yes}"
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
       - name: Log in to Docker Hub
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
