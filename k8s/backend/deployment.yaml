@@ -21,10 +21,10 @@ spec:
         resources:
           limits:
             memory: "256Mi"
-            cpu: 1
+            cpu: "250m"
         volumeMounts:
         - name: backend-config-volume
-          mountPath: /app/backend/config
+          mountPath: /config/config.toml
           subPath: config.toml
       volumes:
       - name: backend-config-volume
