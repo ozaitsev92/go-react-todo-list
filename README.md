@@ -1,49 +1,35 @@
-![Github CI/CD](https://img.shields.io/github/actions/workflow/status/ozaitsev92/go-react-todo-list/go.yml?branch=main)
-![Go Report](https://goreportcard.com/badge/github.com/ozaitsev92/go-react-todo-list/backend)
-![Repository Top Language](https://img.shields.io/github/languages/top/ozaitsev92/go-react-todo-list)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/454237d143514221a1ffc53f1807db21)](https://app.codacy.com/gh/ozaitsev92/go-react-todo-list/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-![Github Repository Size](https://img.shields.io/github/repo-size/ozaitsev92/go-react-todo-list)
-![Github Open Issues](https://img.shields.io/github/issues/ozaitsev92/go-react-todo-list)
-![License](https://img.shields.io/badge/license-MIT-green)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/ozaitsev92/go-react-todo-list)
-![GitHub last commit](https://img.shields.io/github/last-commit/ozaitsev92/go-react-todo-list)
-![GitHub contributors](https://img.shields.io/github/contributors/ozaitsev92/go-react-todo-list)
-
----
+![Go CI](https://img.shields.io/github/actions/workflow/status/ozaitsev92/go-react-todo-list/go.yml?branch=main&label=go)
+![React CI](https://img.shields.io/github/actions/workflow/status/ozaitsev92/go-react-todo-list/react.yml?branch=main&label=react)
 
 # Go React TODO App
 
-Simple TODO app build with Go, React and MongoDB.
+Simple TODO app built with Go, React and MongoDB.
 
 <img src="./img/todo.png">
 
----
-
 ### Usage
-Run `make start` to run the app. The app is available at http://localhost:8081.
-`make start` generates a gitignored `.env` with a random JWT signing key and MongoDB credentials on first run (delete it to rotate), then starts the stack with `docker compose`. Compose serves plain HTTP, so it sets `JWT_SECURE_COOKIE=false`; keep the default `true` anywhere served over HTTPS.
+
+Run `make start`, then open http://localhost:8081. On first run it generates a gitignored `.env` with random secrets (delete it to rotate). Compose serves plain HTTP, so it sets `JWT_SECURE_COOKIE=false`.
 
 ---
 
 ## Frontend
 
-React 19, React Router 7, React Bootstrap, built with [Vite](https://vite.dev/). The source is in [`frontend/`](frontend). Node 22 (`frontend/.nvmrc`).
+React 19, React Router 7, React Bootstrap, built with [Vite](https://vite.dev/). The source is in [`frontend/`](frontend). Node 22.
 
 ```bash
 cd frontend
 npm ci
-npm run dev        # http://localhost:8081, proxies /api to the backend on :8080
-npm test           # Vitest + Testing Library + MSW (no backend needed)
-npm run lint       # ESLint (react, react-hooks, jsx-a11y)
-npm run format     # Prettier
-npm run build      # production build in dist/
+npm run dev        # http://localhost:8081, proxies /api to :8080
+npm test           # no backend needed
+npm run lint
+npm run format
+npm run build      # into dist/
 ```
 
-The app always calls the API at `/api` on its own origin: the Vite dev server, nginx (compose, `API_UPSTREAM`) or the ingress (k8s) route it to the backend. So one image works in every environment, no API URL is baked into the bundle, and no CORS is needed. The session lives in the backend's HttpOnly cookie; the frontend never stores tokens or user data in `localStorage`.
+The app calls the API at `/api` on its own origin, and the Vite dev server, nginx or the k8s ingress routes it to the backend. So one image works everywhere and no CORS is needed. The session lives only in the backend's HttpOnly cookie.
 
-Structure: `lib/api.js` (axios instance, endpoint functions, 401 interceptor), `auth/` (session provider, `RequireAuth`/`GuestOnly` routes), `hooks/useTasks.js` (task list state and mutations), `pages/` and `components/`. Tests use an in-memory MSW fake of the backend contract (`src/test/backend.js`).
-
-The production image is unprivileged nginx serving the build with caching, gzip, security headers (including a strict CSP), a `/healthz` endpoint and the `/api` proxy.
+The production image is unprivileged nginx with caching, gzip, a strict CSP, `/healthz` and the `/api` proxy (`API_UPSTREAM`).
 
 ---
 
@@ -63,7 +49,7 @@ make lint vuln          # go vet + golangci-lint, govulncheck
 
 ### Configuration
 
-Values come from built-in defaults, then an optional TOML file (`CONFIG_PATH`, default `./config/config.toml`; see [`config.example.toml`](backend/config/config.example.toml)), then environment variables, which win. Invalid configuration stops the process at startup.
+Defaults < optional TOML file (`CONFIG_PATH`, see [`config.example.toml`](backend/config/config.example.toml)) < env vars. Invalid config stops startup.
 
 | Env var | Default | Notes |
 |---|---|---|
@@ -75,13 +61,13 @@ Values come from built-in defaults, then an optional TOML file (`CONFIG_PATH`, d
 | `JWT_SECURE_COOKIE` | `true` | set `false` only for plain-HTTP development |
 | `JWT_COOKIE_DOMAIN`, `JWT_ISSUER` | `""`, `todo-api` | |
 | `PASSWORD_HASH_COST` | `12` | bcrypt cost, 10–16 |
-| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` (JSON logs via `log/slog`) |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 | `MAX_BODY_BYTES` | `65536` | larger requests get `413` |
 | `MONGO_TIMEOUT`, `READ_HEADER_TIMEOUT`, `READ_TIMEOUT`, `WRITE_TIMEOUT`, `IDLE_TIMEOUT`, `GRACEFUL_TIMEOUT` | `10`, `5`, `15`, `15`, `60`, `15` | seconds |
 
 ### API
 
-Authentication uses an `HttpOnly`, `SameSite=Lax` cookie named `jwt-token`, set by `POST /v1/users/login`. Errors always have the shape `{"error": "message"}`.
+Authentication uses an `HttpOnly`, `SameSite=Lax` cookie named `jwt-token`, set by `POST /v1/users/login`. Errors have the shape `{"error": "message"}`.
 
 | Method & path | Success | Errors |
 |---|---|---|
@@ -97,7 +83,7 @@ Authentication uses an `HttpOnly`, `SameSite=Lax` cookie named `jwt-token`, set 
 | `DELETE /v1/tasks/{id}` | `204` | `400`, `404` |
 | `GET /healthz` / `GET /readyz` / `GET /metrics` | liveness / readiness (pings MongoDB) / Prometheus | `503` from `/readyz` when the DB is unreachable |
 
-Another user's task returns the same `404` as a missing one, so the API never reveals that a task exists.
+Another user's task returns the same `404` as a missing one.
 
 ### Architecture
 
@@ -115,14 +101,12 @@ cmd/app ─▶ internal/app (composition root: config, storage, wiring, lifecycl
 pkg/{httpserver,logger,mongodb}                 generic helpers with no app imports
 ```
 
-Dependencies point inward: `domain` imports nothing from the other layers. Both repository implementations pass one shared contract suite (`internal/infrastructure/repository/contract`), so they are interchangeable (`STORAGE=memory|mongo`).
+Both repository implementations pass one shared contract suite, so `STORAGE=memory|mongo` are interchangeable.
 
 ### Design decisions and trade-offs
 
-- **Stateless JWT in an HttpOnly cookie.** JavaScript can't read the token, so XSS can't steal it. CSRF is mitigated by `SameSite=Lax` and a same-origin deployment: the API sends no CORS headers, so browsers block cross-origin JSON requests at the preflight and never expose responses to other origins. Tokens can't be revoked before they expire: logout clears the cookie, but a copied token stays valid for the rest of the session (30 min by default). Refresh tokens or a `jti` denylist would fix that; both are left out for simplicity.
-- **Uniqueness comes from the database.** Emails are normalized (trimmed, lowercased; display-name forms like `Alice <a@x>` are rejected), and a unique MongoDB index created at startup enforces one account per email, even under concurrent sign-ups.
-- **Login is timing-safe.** Unknown emails still run one bcrypt comparison, and every credential failure returns the same `401`.
-- **Lifecycle.** Startup pings MongoDB with a timeout and creates indexes before serving. On SIGTERM the server drains HTTP and then disconnects MongoDB.
+- **Stateless JWT in an HttpOnly cookie.** XSS can't read the token. CSRF is mitigated by `SameSite=Lax` and the same-origin deployment (the API sends no CORS headers). Tokens can't be revoked before they expire (30 min by default); refresh tokens or a `jti` denylist would fix that.
+- **Uniqueness comes from the database.** Emails are normalized (trimmed, lowercased), and a unique MongoDB index enforces one account per email, even under concurrent sign-ups.
 - **Not implemented yet:** rate limiting on the auth endpoints, pagination on `GET /v1/tasks`, and an OpenAPI spec.
 
 ### Kubernetes
@@ -137,4 +121,4 @@ kubectl -n todo-app create secret generic backend-secrets \
   --from-literal=mongo-url="mongodb://todo:<password>@mongo-0.mongo:27017/?authSource=admin"
 ```
 
-The ingress serves the API under `/api` (`/api/v1/tasks` → `/v1/tasks`). The session cookie is `Secure`, so the ingress must serve HTTPS; for a plain-HTTP local cluster set `JWT_SECURE_COOKIE=false`.
+The ingress serves the API under `/api` and must use HTTPS, because the session cookie is `Secure` (set `JWT_SECURE_COOKIE=false` for a plain-HTTP local cluster).
