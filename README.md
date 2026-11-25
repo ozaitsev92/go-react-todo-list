@@ -25,6 +25,28 @@ Run `make start` to run the app. The app is available at http://localhost:8081.
 
 ---
 
+## Frontend
+
+React 19, React Router 7, React Bootstrap, built with [Vite](https://vite.dev/). The source is in [`frontend/`](frontend). Node 22 (`frontend/.nvmrc`).
+
+```bash
+cd frontend
+npm ci
+npm run dev        # http://localhost:8081, proxies /api to the backend on :8080
+npm test           # Vitest + Testing Library + MSW (no backend needed)
+npm run lint       # ESLint (react, react-hooks, jsx-a11y)
+npm run format     # Prettier
+npm run build      # production build in dist/
+```
+
+The app always calls the API at `/api` on its own origin: the Vite dev server, nginx (compose, `API_UPSTREAM`) or the ingress (k8s) route it to the backend. So one image works in every environment, no API URL is baked into the bundle, and no CORS is needed. The session lives in the backend's HttpOnly cookie; the frontend never stores tokens or user data in `localStorage`.
+
+Structure: `lib/api.js` (axios instance, endpoint functions, 401 interceptor), `auth/` (session provider, `RequireAuth`/`GuestOnly` routes), `hooks/useTasks.js` (task list state and mutations), `pages/` and `components/`. Tests use an in-memory MSW fake of the backend contract (`src/test/backend.js`).
+
+The production image is unprivileged nginx serving the build with caching, gzip, security headers (including a strict CSP), a `/healthz` endpoint and the `/api` proxy.
+
+---
+
 ## Backend
 
 Go 1.26, [Gin](https://gin-gonic.com/), MongoDB. The source is in [`backend/`](backend).
@@ -116,4 +138,4 @@ kubectl -n todo-app create secret generic backend-secrets \
   --from-literal=mongo-url="mongodb://todo:<password>@mongo-0.mongo:27017/?authSource=admin"
 ```
 
-The ingress serves the API under `/api` (`/api/v1/tasks` → `/v1/tasks`).
+The ingress serves the API under `/api` (`/api/v1/tasks` → `/v1/tasks`). The session cookie is `Secure`, so the ingress must serve HTTPS; for a plain-HTTP local cluster set `JWT_SECURE_COOKIE=false`.

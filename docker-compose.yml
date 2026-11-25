@@ -6,9 +6,16 @@ services:
       dockerfile: Dockerfile
       context: frontend
     ports:
-      - "8081:80"
+      - "8081:8080"
+    environment:
+      API_UPSTREAM: http://todoapp_server:8080
     depends_on:
       - todoapp_server
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     networks:
       - todoapp_network
 

@@ -1,7 +1,4 @@
 .completed {
     text-decoration: line-through;
-}
-
-.cursor-pointer {
-    cursor: pointer;
+    color: var(--bs-secondary-color);
 }

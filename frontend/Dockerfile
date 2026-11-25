@@ -1,21 +1,15 @@
-FROM node:23.5.0-bookworm as build
-
+FROM node:22-alpine AS build
 WORKDIR /app
 
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
-
-ENV NODE_ENV production
-
-RUN npm install
 RUN npm run build
 
-FROM nginx:alpine
-
-COPY --from=build /app/build /usr/share/nginx/html
-
-RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+FROM nginxinc/nginx-unprivileged:1.30-alpine
+COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
+COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+ENV API_UPSTREAM=http://todoapp_server:8080
+EXPOSE 8080
