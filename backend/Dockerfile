@@ -1,14 +1,16 @@
-FROM golang:1.23.3 as build
+# syntax=docker/dockerfile:1
 
-WORKDIR /go/src/app
-COPY . .
+FROM golang:1.26-bookworm AS build
+WORKDIR /src
 
+COPY go.mod go.sum ./
 RUN go mod download
-RUN CGO_ENABLED=0 go build -o /go/bin/app /go/src/app/cmd/app/
 
-FROM gcr.io/distroless/static-debian11
-COPY --from=build /go/bin/app /
-COPY config /config
+COPY . .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app ./cmd/app
 
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=build /out/app /app
+USER nonroot:nonroot
 EXPOSE 8080
-CMD ["/app"]
+ENTRYPOINT ["/app"]

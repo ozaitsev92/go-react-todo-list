@@ -1,73 +1,87 @@
+// Package user contains the user entity and its repository port.
 package user
 
 import (
 	"errors"
 	"net/mail"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+)
+
+// Password length limits; bcrypt ignores bytes beyond 72.
+const (
+	MinPasswordLength = 8
+	MaxPasswordLength = 72
 )
 
 var (
-	ErrInvalidEmail    = errors.New("email is invalid")
-	ErrInvalidPassword = errors.New("password is invalid")
+	// ErrInvalidEmail is returned for empty or malformed email addresses.
+	ErrInvalidEmail = errors.New("email is invalid")
+	// ErrWeakPassword is returned when a password violates the length policy.
+	ErrWeakPassword = errors.New("password must be between 8 and 72 bytes")
+	// ErrInvalidPasswordHash is returned when constructing a user without a hash.
+	ErrInvalidPasswordHash = errors.New("password hash is required")
 )
 
-// User is a representation of a user entity.
+// User is the user entity.
 type User struct {
-	ID        uuid.UUID
-	Email     string
-	Password  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           uuid.UUID
+	Email        string
+	PasswordHash string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
-// NewUser creates and returns a new User.
-func NewUser(email, password string) (User, error) {
-	if email == "" {
-		return User{}, ErrInvalidEmail
-	}
-
-	m, err := mail.ParseAddress(email)
-	if err != nil {
-		return User{}, ErrInvalidEmail
-	}
-
-	parsedEmail := m.Address
-
-	if password == "" {
-		return User{}, ErrInvalidPassword
-	}
-
-	encryptedPassword, err := encryptString(password)
+// NewUser creates a user from an email (normalised) and a password hash.
+func NewUser(email, passwordHash string) (User, error) {
+	normalized, err := NormalizeEmail(email)
 	if err != nil {
 		return User{}, err
 	}
 
-	currentTime := time.Now()
-
-	user := User{
-		ID:        uuid.New(),
-		Email:     parsedEmail,
-		Password:  encryptedPassword,
-		CreatedAt: currentTime,
-		UpdatedAt: currentTime,
+	if passwordHash == "" {
+		return User{}, ErrInvalidPasswordHash
 	}
 
-	return user, nil
+	now := now()
+
+	return User{
+		ID:           uuid.New(),
+		Email:        normalized,
+		PasswordHash: passwordHash,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}, nil
 }
 
-// ComparePassword -.
-func (u *User) ComparePassword(password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)) == nil
-}
-
-func encryptString(s string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword([]byte(s), bcrypt.MinCost)
-	if err != nil {
-		return "", err
+// NormalizeEmail trims and lower-cases a bare address, rejecting display-name
+// forms such as "Alice <alice@example.com>".
+func NormalizeEmail(email string) (string, error) {
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return "", ErrInvalidEmail
 	}
 
-	return string(b), nil
+	addr, err := mail.ParseAddress(email)
+	if err != nil || addr.Name != "" || addr.Address != email {
+		return "", ErrInvalidEmail
+	}
+
+	return strings.ToLower(addr.Address), nil
+}
+
+// ValidatePassword enforces the password policy.
+func ValidatePassword(password string) error {
+	if n := len(password); n < MinPasswordLength || n > MaxPasswordLength {
+		return ErrWeakPassword
+	}
+
+	return nil
+}
+
+// now returns UTC time truncated to MongoDB's millisecond precision.
+func now() time.Time {
+	return time.Now().UTC().Truncate(time.Millisecond)
 }

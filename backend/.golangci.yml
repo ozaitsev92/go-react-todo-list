@@ -1,0 +1,29 @@
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - errorlint
+    - exhaustive
+    - forcetypeassert
+    - gocritic
+    - gosec
+    - nilerr
+    - noctx
+    - revive
+    - unparam
+    - wrapcheck
+  settings:
+    wrapcheck:
+      ignore-package-globs:
+        - github.com/ozaitsev92/tododdd/*
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters: [wrapcheck, noctx, gosec, forcetypeassert, containedctx]
+      - linters: [revive]
+        text: "var-naming: avoid meaningless package names"

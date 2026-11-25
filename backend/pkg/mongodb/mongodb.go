@@ -1,36 +1,36 @@
+// Package mongodb creates MongoDB clients.
 package mongodb
 
 import (
 	"context"
-	"sync"
+	"fmt"
+	"time"
 
-	"github.com/ozaitsev92/tododdd/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var m *mongo.Database
-var hdlOnce sync.Once
+// Connect returns a client after pinging the server; callers must Disconnect it.
+func Connect(ctx context.Context, uri string, timeout time.Duration) (*mongo.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
-// NewOrGetSingleton -.
-func NewOrGetSingleton(config config.Config) *mongo.Database {
-	hdlOnce.Do(func() {
-		db, err := initMongo(config)
-		if err != nil {
-			panic(err)
-		}
-
-		m = db
-	})
-
-	return m
-}
-
-func initMongo(config config.Config) (*mongo.Database, error) {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(config.MongoUrl))
+	client, err := mongo.Connect(ctx, options.Client().
+		ApplyURI(uri).
+		SetConnectTimeout(timeout).
+		SetServerSelectionTimeout(timeout).
+		SetTimeout(timeout)) // default per-operation timeout (CSOT)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("mongodb: connect: %w", err)
 	}
 
-	return client.Database(config.MongoDBName), nil
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		dctx, dcancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+		defer dcancel()
+		_ = client.Disconnect(dctx)
+		return nil, fmt.Errorf("mongodb: ping: %w", err)
+	}
+
+	return client, nil
 }

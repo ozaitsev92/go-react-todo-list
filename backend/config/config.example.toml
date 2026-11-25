@@ -1,16 +1,26 @@
+# Copy to config.toml (gitignored). Env vars override keys (e.g. MONGO_URL).
+# Set the JWT key via env only: JWT_SIGNING_KEY=$(openssl rand -hex 32)
+
 bind_addr = "8080"
-log_level = "debug"
-mongo_url = "mongodb://todoapp_mongodb:27017"
+log_level = "info"          # debug | info | warn | error
+storage = "mongo"           # mongo | memory
+
+mongo_url = "mongodb://localhost:27017"
 mongo_db_name = "todo"
-session_key = "350401be75bbb0fafd3d912a1a1d5e54"
-write_timeout = 15
+mongo_timeout = 10          # seconds
+
+read_header_timeout = 5     # seconds
 read_timeout = 15
+write_timeout = 15
 idle_timeout = 60
 graceful_timeout = 15
+max_body_bytes = 65536
 
-jwt_signing_key = "go-todo-app"
-jwt_session_length = 30
-jwt_cookie_domain = "localhost"
-jwt_secure_cookie = true
+password_hash_cost = 12     # bcrypt cost, 10..16
+
+jwt_issuer = "todo-api"
+jwt_session_length = 30     # minutes
+jwt_cookie_domain = ""      # empty = host-only cookie
+jwt_secure_cookie = true    # false only for local plain HTTP
 
 allowed_origin = "http://localhost:8081"

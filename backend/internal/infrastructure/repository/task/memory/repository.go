@@ -1,111 +1,94 @@
+// Package repository is a concurrency-safe in-memory task.Repository.
 package repository
 
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/ozaitsev92/tododdd/config"
 	"github.com/ozaitsev92/tododdd/internal/domain/task"
-
-	"github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/memory/converter"
-	repoModel "github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/memory/model"
 )
 
 var _ task.Repository = (*Repository)(nil)
 
+// Repository stores tasks by ID; tasks are values, so callers get copies.
 type Repository struct {
-	tasks map[uuid.UUID]repoModel.Task
 	mu    sync.RWMutex
+	tasks map[uuid.UUID]task.Task
 }
 
-func NewRepository(_ config.Config) *Repository {
-	return &Repository{
-		tasks: make(map[uuid.UUID]repoModel.Task),
-	}
+// NewRepository returns an empty repository.
+func NewRepository() *Repository {
+	return &Repository{tasks: make(map[uuid.UUID]task.Task)}
 }
 
+// GetByID returns the task with id or task.ErrTaskNotFound.
 func (r *Repository) GetByID(_ context.Context, id uuid.UUID) (task.Task, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	if r.tasks == nil {
-		r.tasks = make(map[uuid.UUID]repoModel.Task)
+	t, ok := r.tasks[id]
+	if !ok {
+		return task.Task{}, task.ErrTaskNotFound
 	}
 
-	if ti, ok := r.tasks[id]; ok {
-		return converter.ToTaskFromRepo(ti), nil
-	}
-
-	return task.Task{}, task.ErrTaskNotFound
+	return t, nil
 }
 
-func (r *Repository) GetAllByUserID(_ context.Context, userId uuid.UUID) ([]task.Task, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+// GetAllByUserID returns the user's tasks ordered by CreatedAt (never nil).
+func (r *Repository) GetAllByUserID(_ context.Context, userID uuid.UUID) ([]task.Task, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	if r.tasks == nil {
-		r.tasks = make(map[uuid.UUID]repoModel.Task)
-	}
-
-	var tasks []task.Task
-	for _, ti := range r.tasks {
-		if ti.UserID == userId.String() {
-			tasks = append(tasks, converter.ToTaskFromRepo(ti))
+	tasks := make([]task.Task, 0)
+	for _, t := range r.tasks {
+		if t.UserID == userID {
+			tasks = append(tasks, t)
 		}
 	}
 
-	sort.Slice(tasks, func(i, j int) bool { return tasks[i].CreatedAt.UnixNano() < tasks[j].CreatedAt.UnixNano() })
+	slices.SortStableFunc(tasks, func(a, b task.Task) int { return a.CreatedAt.Compare(b.CreatedAt) })
 
 	return tasks, nil
 }
 
-func (r *Repository) Save(_ context.Context, ti task.Task) error {
+// Save inserts a new task or returns task.ErrTaskExists.
+func (r *Repository) Save(_ context.Context, t task.Task) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.tasks == nil {
-		r.tasks = make(map[uuid.UUID]repoModel.Task)
+	if _, ok := r.tasks[t.ID]; ok {
+		return fmt.Errorf("save task %s: %w", t.ID, task.ErrTaskExists)
 	}
 
-	if _, ok := r.tasks[ti.ID]; ok {
-		return fmt.Errorf("task already exists: %w", task.ErrFailedToSaveTask)
-	}
-
-	r.tasks[ti.ID] = converter.ToRepoFromTask(ti)
+	r.tasks[t.ID] = t
 
 	return nil
 }
 
-func (r *Repository) Update(_ context.Context, ti task.Task) error {
+// Update replaces an existing task or returns task.ErrTaskNotFound.
+func (r *Repository) Update(_ context.Context, t task.Task) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.tasks == nil {
-		r.tasks = make(map[uuid.UUID]repoModel.Task)
+	if _, ok := r.tasks[t.ID]; !ok {
+		return task.ErrTaskNotFound
 	}
 
-	if _, ok := r.tasks[ti.ID]; !ok {
-		return fmt.Errorf("task does not exist: %w", task.ErrFailedToSaveTask)
-	}
-
-	r.tasks[ti.ID] = converter.ToRepoFromTask(ti)
+	r.tasks[t.ID] = t
 
 	return nil
 }
 
+// Delete removes a task or returns task.ErrTaskNotFound.
 func (r *Repository) Delete(_ context.Context, id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.tasks == nil {
-		r.tasks = make(map[uuid.UUID]repoModel.Task)
-	}
-
 	if _, ok := r.tasks[id]; !ok {
-		return fmt.Errorf("task does not exist: %w", task.ErrFailedDeleteTask)
+		return task.ErrTaskNotFound
 	}
 
 	delete(r.tasks, id)

@@ -1,0 +1,11 @@
+config/config.toml
+.env
+*.env
+bin/
+*.out
+*.test
+.git
+.idea/
+.vscode/
+Dockerfile
+.dockerignore

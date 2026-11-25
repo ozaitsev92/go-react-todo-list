@@ -6,6 +6,7 @@ import (
 	"github.com/ozaitsev92/tododdd/internal/domain/user"
 )
 
+// User is the JSON representation of a user. It never includes the password hash.
 type User struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
@@ -13,6 +14,7 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// ToResponseFromUser converts a domain user into its JSON representation.
 func ToResponseFromUser(u user.User) User {
 	return User{
 		ID:        u.ID.String(),

@@ -1,139 +1,92 @@
 package user_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/ozaitsev92/tododdd/internal/domain/user"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func TestUserNewUser(t *testing.T) {
-	type args struct {
-		email    string
-		password string
-	}
+func TestNormalizeEmail(t *testing.T) {
+	t.Parallel()
 
-	type testCase struct {
-		name    string
-		args    args
-		want    user.User
-		wantErr error
-	}
-
-	tests := []testCase{
-		{
-			name: "Success",
-			args: args{
-				email:    "test@example.com",
-				password: "test",
-			},
-			want: user.User{
-				Email:    "test@example.com",
-				Password: encryptString("test"),
-			},
-		},
-		{
-			name: "Empty email",
-			args: args{
-				email:    "",
-				password: "test",
-			},
-			want:    user.User{},
-			wantErr: user.ErrInvalidEmail,
-		},
-		{
-			name: "Invalid email",
-			args: args{
-				email:    "invalid email",
-				password: "test",
-			},
-			want:    user.User{},
-			wantErr: user.ErrInvalidEmail,
-		},
-		{
-			name: "Empty Password",
-			args: args{
-				email:    "test@example.com",
-				password: "",
-			},
-			want:    user.User{},
-			wantErr: user.ErrInvalidPassword,
-		},
+	tests := []struct {
+		in      string
+		want    string
+		wantErr bool
+	}{
+		{in: "alice@example.com", want: "alice@example.com"},
+		{in: "  Alice@Example.COM ", want: "alice@example.com"},
+		{in: "", wantErr: true},
+		{in: "not-an-email", wantErr: true},
+		{in: "Alice <alice@example.com>", wantErr: true},
+		{in: "<alice@example.com>", wantErr: true},
+		{in: "a@b.c, d@e.f", wantErr: true},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.in, func(t *testing.T) {
 			t.Parallel()
-			got, err := user.NewUser(tt.args.email, tt.args.password)
-			if err != tt.wantErr {
-				t.Errorf("NewUser() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := user.NormalizeEmail(tt.in)
+			if tt.wantErr {
+				if !errors.Is(err, user.ErrInvalidEmail) {
+					t.Fatalf("err = %v, want ErrInvalidEmail", err)
+				}
+				return
 			}
-			if tt.wantErr == nil && got.ID == uuid.Nil {
-				t.Errorf("NewUser() got = %v, want %v", got, tt.want)
-			}
-			if tt.wantErr == nil && got.CreatedAt.IsZero() {
-				t.Errorf("NewUser() CreatedAt is zero")
-			}
-			if tt.wantErr == nil && got.UpdatedAt.IsZero() {
-				t.Errorf("NewUser() CreatedAt is UpdatedAt")
-			}
-			if tt.wantErr == nil && got.Email != tt.want.Email {
-				t.Errorf("NewUser() got = %v, want %v", got.Email, tt.want.Email)
-			}
-			if tt.wantErr == nil && bcrypt.CompareHashAndPassword([]byte(got.Password), []byte(tt.args.password)) != nil {
-				t.Error("NewUser() password is not encrypted correctly")
+			if err != nil || got != tt.want {
+				t.Fatalf("NormalizeEmail(%q) = %q, %v; want %q", tt.in, got, err, tt.want)
 			}
 		})
 	}
 }
 
-func TestUserComparePassword(t *testing.T) {
-	type args struct {
-		email    string
-		password string
-	}
+func TestValidatePassword(t *testing.T) {
+	t.Parallel()
 
-	type testCase struct {
-		name    string
-		args    args
-		want    user.User
-		wantErr error
-	}
-
-	tests := []testCase{
-		{
-			name: "Success",
-			args: args{
-				email:    "test@example.com",
-				password: "qwerty123",
-			},
-			want: user.User{
-				Email:    "test@example.com",
-				Password: encryptString("qwerty123"),
-			},
-		},
+	tests := []struct {
+		name string
+		pw   string
+		ok   bool
+	}{
+		{"min length", strings.Repeat("a", user.MinPasswordLength), true},
+		{"max length", strings.Repeat("a", user.MaxPasswordLength), true},
+		{"too short", strings.Repeat("a", user.MinPasswordLength-1), false},
+		{"too long for bcrypt", strings.Repeat("a", user.MaxPasswordLength+1), false},
+		{"empty", "", false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := user.NewUser(tt.args.email, tt.args.password)
-			if err != tt.wantErr {
-				t.Errorf("NewUser() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if tt.wantErr == nil && (got.Password == tt.args.password || !got.ComparePassword(tt.args.password)) {
-				t.Error("NewUser() password is not encrypted correctly")
+			err := user.ValidatePassword(tt.pw)
+			if tt.ok != (err == nil) || (err != nil && !errors.Is(err, user.ErrWeakPassword)) {
+				t.Fatalf("ValidatePassword(len %d) = %v", len(tt.pw), err)
 			}
 		})
 	}
 }
 
-func encryptString(s string) string {
-	b, err := bcrypt.GenerateFromPassword([]byte(s), bcrypt.MinCost)
-	if err != nil {
-		panic(err)
-	}
+func TestNewUser(t *testing.T) {
+	t.Parallel()
 
-	return string(b)
+	t.Run("valid normalises email", func(t *testing.T) {
+		t.Parallel()
+		u, err := user.NewUser(" Bob@Example.com", "hash")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if u.ID == uuid.Nil || u.Email != "bob@example.com" || u.PasswordHash != "hash" || u.CreatedAt.IsZero() {
+			t.Fatalf("unexpected user %+v", u)
+		}
+	})
+
+	t.Run("missing hash", func(t *testing.T) {
+		t.Parallel()
+		if _, err := user.NewUser("a@example.com", ""); !errors.Is(err, user.ErrInvalidPasswordHash) {
+			t.Fatalf("err = %v", err)
+		}
+	})
 }

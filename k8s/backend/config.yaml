@@ -4,18 +4,12 @@ metadata:
   name: backend-config
   namespace: todo-app
 data:
-  config.toml: |
-    bind_addr = "8080"
-    log_level = "debug"
-    mongo_url = "mongodb://todoapp_mongodb:27017"
-    mongo_db_name = "todo"
-    session_key = "350401be75bbb0fafd3d912a1a1d5e54"
-    write_timeout = 15
-    read_timeout = 15
-    idle_timeout = 60
-    graceful_timeout = 15
-    jwt_signing_key = "go-todo-app"
-    jwt_session_length = 30
-    jwt_cookie_domain = "localhost"
-    jwt_secure_cookie = true
-    allowed_origin = "http://localhost:8081"
+  BIND_ADDR: "8080"
+  LOG_LEVEL: "info"
+  STORAGE: "mongo"
+  MONGO_DB_NAME: "todo"
+  JWT_ISSUER: "todo-api"
+  JWT_SESSION_LENGTH: "30"
+  JWT_SECURE_COOKIE: "true"
+  JWT_COOKIE_DOMAIN: ""
+  ALLOWED_ORIGIN: "https://todo-app.example.local"

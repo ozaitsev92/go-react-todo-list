@@ -1,308 +1,76 @@
+//go:build integration
+
 package repository_test
 
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
-	"net"
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/ory/dockertest/v3"
-	"github.com/ozaitsev92/tododdd/config"
 	"github.com/ozaitsev92/tododdd/internal/domain/task"
-	"github.com/ozaitsev92/tododdd/internal/domain/user"
+	"github.com/ozaitsev92/tododdd/internal/infrastructure/repository/contract"
 	repository "github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo"
-	"github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo/converter"
-	repoModel "github.com/ozaitsev92/tododdd/internal/infrastructure/repository/task/mongo/model"
-	"github.com/ozaitsev92/tododdd/pkg/mongodb"
-	"go.mongodb.org/mongo-driver/mongo"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/ozaitsev92/tododdd/internal/testutil/mongotest"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-var (
-	MONGODB_PORT = ""
-)
+func TestMain(m *testing.M) { mongotest.Main(m) }
 
-func TestMain(m *testing.M) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+func newRepo(t *testing.T) *repository.Repository {
+	t.Helper()
+	r := repository.NewRepository(mongotest.DB(t))
+	if err := r.EnsureIndexes(context.Background()); err != nil {
+		t.Fatalf("EnsureIndexes: %v", err)
 	}
-
-	resource, err := pool.Run("mongo", "latest", []string{})
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	err = pool.Retry(func() error {
-		MONGODB_PORT = resource.GetPort("27017/tcp")
-		_, err := net.Dial("tcp", net.JoinHostPort("localhost", MONGODB_PORT))
-		return err
-	})
-
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
-	}
-
-	code := m.Run()
-
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
-	}
-
-	os.Exit(code)
+	return r
 }
 
-func TestRepositoryGetByID(t *testing.T) {
-	cfg := config.Config{}
-	cfg.MongoDBName = "todo_test"
-	cfg.MongoUrl = fmt.Sprintf("mongodb://localhost:%s", MONGODB_PORT)
-
-	ti, err := task.NewTask("task text", uuid.New())
-	if err != nil {
-		t.Errorf("GetByID() failed to create a new task: err = '%v'", err)
-	}
-
-	// Check if a task exists in the DB: should fail
-	r := repository.NewRepository(cfg)
-	_, err = r.GetByID(context.Background(), ti.ID)
-	if !errors.Is(err, task.ErrTaskNotFound) {
-		t.Errorf("GetByID() got = '%v', want = '%v'", err, task.ErrTaskNotFound)
-	}
-
-	// Add the task to the tasks collection
-	collection := mongodb.NewOrGetSingleton(cfg).Collection("tasks")
-	mongoTask := converter.ToRepoFromTask(ti)
-	_, err = collection.InsertOne(context.Background(), mongoTask)
-	if err != nil {
-		t.Errorf("GetByID() failed to save a new task: err = '%v'", err)
-	}
-
-	// Check if a task exists in the DB: should succeed
-	foundTask, err := r.GetByID(context.Background(), ti.ID)
-	if errors.Is(err, task.ErrTaskNotFound) {
-		t.Errorf("GetByID() err = '%v', want = '%v'", err, nil)
-	}
-
-	if foundTask.ID != ti.ID {
-		t.Errorf("GetByID() got = '%v', want = '%v'", foundTask.ID, ti.ID)
-	}
-
-	if foundTask.Text != ti.Text {
-		t.Errorf("GetByID() got = '%v', want = '%v'", foundTask.Text, ti.Text)
-	}
-
-	if foundTask.UserID != ti.UserID {
-		t.Errorf("GetByID() got = '%v', want = '%v'", foundTask.UserID, ti.UserID)
-	}
+func TestTaskRepository_Contract(t *testing.T) {
+	contract.TaskRepository(t, func(t *testing.T) task.Repository { return newRepo(t) })
 }
 
-func TestRepositoryGetAllByUserID(t *testing.T) {
-	cfg := config.Config{}
-	cfg.MongoDBName = "todo_test"
-	cfg.MongoUrl = fmt.Sprintf("mongodb://localhost:%s", MONGODB_PORT)
+func TestTaskRepository_EnsureIndexes_CreatesUserIDIndex(t *testing.T) {
+	db := mongotest.DB(t)
+	r := repository.NewRepository(db)
+	ctx := context.Background()
 
-	userId1 := uuid.New()
+	for range 2 { // idempotent
+		if err := r.EnsureIndexes(ctx); err != nil {
+			t.Fatalf("EnsureIndexes: %v", err)
+		}
+	}
 
-	t1, err := task.NewTask("task text 1", userId1)
+	cur, err := db.Collection(repository.CollectionName).Indexes().List(ctx)
 	if err != nil {
-		t.Errorf("GetAllByUserID() failed to create a new task: err = '%v'", err)
+		t.Fatal(err)
 	}
-
-	t2, err := task.NewTask("task text 2", userId1)
-	if err != nil {
-		t.Errorf("GetAllByUserID() failed to create a new task: err = '%v'", err)
+	var idx []bson.M
+	if err := cur.All(ctx, &idx); err != nil {
+		t.Fatal(err)
 	}
-
-	userId2 := uuid.New()
-
-	t3, err := task.NewTask("task text 2", userId2)
-	if err != nil {
-		t.Errorf("GetAllByUserID() failed to create a new task: err = '%v'", err)
+	for _, i := range idx {
+		if i["name"] == "user_id_created_at" {
+			return
+		}
 	}
-
-	// Check if a task exists in the DB: should fail
-	r := repository.NewRepository(cfg)
-	foundTasks, err := r.GetAllByUserID(context.Background(), t1.UserID)
-	if err != nil {
-		t.Errorf("GetAllByUserID() error = '%v'", err)
-	}
-
-	if len(foundTasks) != 0 {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", len(foundTasks), 2)
-	}
-
-	// Add the task to the tasks collection
-	collection := mongodb.NewOrGetSingleton(cfg).Collection("tasks")
-	_, err = collection.InsertMany(context.Background(), []interface{}{
-		converter.ToRepoFromTask(t1),
-		converter.ToRepoFromTask(t2),
-		converter.ToRepoFromTask(t3),
-	})
-	if err != nil {
-		t.Errorf("GetAllByUserID() failed to save new tasks: err = '%v'", err)
-	}
-
-	// Check if a task exists in the DB: should succeed
-	foundTasks, err = r.GetAllByUserID(context.Background(), userId1)
-	if errors.Is(err, task.ErrTaskNotFound) {
-		t.Errorf("GetAllByUserID() err = '%v', want = '%v'", err, nil)
-	}
-
-	if len(foundTasks) != 2 {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", len(foundTasks), 2)
-	}
-
-	// Task #1
-	ft1 := foundTasks[0]
-	if ft1.ID != t1.ID {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", ft1.ID, t1.ID)
-	}
-
-	if ft1.Text != t1.Text {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", ft1.Text, t1.Text)
-	}
-
-	if ft1.UserID != t1.UserID {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", ft1.UserID, t1.UserID)
-	}
-
-	// Task #2
-	ft2 := foundTasks[1]
-	if ft2.ID != t2.ID {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", ft2.ID, t2.ID)
-	}
-
-	if ft2.Text != t2.Text {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", ft2.Text, t2.Text)
-	}
-
-	if ft2.UserID != t2.UserID {
-		t.Errorf("GetAllByUserID() got = '%v', want = '%v'", ft2.UserID, t2.UserID)
-	}
+	t.Fatalf("index user_id_created_at not found in %v", idx)
 }
 
-func TestRepositorySave(t *testing.T) {
-	cfg := config.Config{}
-	cfg.MongoDBName = "todo_test"
-	cfg.MongoUrl = fmt.Sprintf("mongodb://localhost:%s", MONGODB_PORT)
+func TestTaskRepository_GetByID_CorruptDocument_ReturnsErrorNotPanic(t *testing.T) {
+	db := mongotest.DB(t)
+	r := repository.NewRepository(db)
+	ctx := context.Background()
+	id := uuid.New()
 
-	ti, err := task.NewTask("task text", uuid.New())
+	_, err := db.Collection(repository.CollectionName).InsertOne(ctx,
+		bson.M{"_id": id.String(), "text": "x", "user_id": "not-a-uuid"})
 	if err != nil {
-		t.Errorf("Save() failed to create a new task: err = '%v'", err)
+		t.Fatal(err)
 	}
 
-	var mongoTask repoModel.Task
-	collection := mongodb.NewOrGetSingleton(cfg).Collection("tasks")
-
-	// Check if a task exists in the DB: should fail
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
-	if !errors.Is(err, mongo.ErrNoDocuments) {
-		t.Errorf("Save() got = '%v', want = '%v'", err, user.ErrUserNotFound)
-	}
-
-	// Save the task into the DB
-	r := repository.NewRepository(cfg)
-	err = r.Save(context.Background(), ti)
-	if err != nil {
-		t.Errorf("Save() err = '%v'", err)
-	}
-
-	// Check if a user exists in the DB: should succeed
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
-	if err != nil {
-		t.Errorf("Save() failed to create a new user: err = '%v'", err)
-	}
-
-	fountTask := converter.ToTaskFromRepo(mongoTask)
-
-	if fountTask.ID != ti.ID {
-		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.ID, ti.ID)
-	}
-
-	if fountTask.UserID != ti.UserID {
-		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.UserID, ti.UserID)
-	}
-}
-
-func TestRepositoryUpdate(t *testing.T) {
-	cfg := config.Config{}
-	cfg.MongoDBName = "todo_test"
-	cfg.MongoUrl = fmt.Sprintf("mongodb://localhost:%s", MONGODB_PORT)
-
-	ti, err := task.NewTask("task text", uuid.New())
-	if err != nil {
-		t.Errorf("Update() failed to create a new task: err = '%v'", err)
-	}
-
-	// Add the task to the tasks collection
-	collection := mongodb.NewOrGetSingleton(cfg).Collection("tasks")
-	mongoTask := converter.ToRepoFromTask(ti)
-	_, err = collection.InsertOne(context.Background(), mongoTask)
-	if err != nil {
-		t.Errorf("Update() failed to save a new task: err = '%v'", err)
-	}
-
-	ti.Text = "this is a new version of the task"
-
-	// Update the task in the DB
-	r := repository.NewRepository(cfg)
-	err = r.Update(context.Background(), ti)
-	if err != nil {
-		t.Errorf("Update() err = '%v'", err)
-	}
-
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
-	if err != nil {
-		t.Errorf("Save() failed to create a new user: err = '%v'", err)
-	}
-
-	fountTask := converter.ToTaskFromRepo(mongoTask)
-
-	if fountTask.ID != ti.ID {
-		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.ID, ti.ID)
-	}
-
-	if fountTask.UserID != ti.UserID {
-		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.UserID, ti.UserID)
-	}
-
-	if fountTask.Text != ti.Text {
-		t.Errorf("GetByID() got = '%v', want = '%v'", fountTask.Text, ti.Text)
-	}
-}
-
-func TestRepositoryDelete(t *testing.T) {
-	cfg := config.Config{}
-	cfg.MongoDBName = "todo_test"
-	cfg.MongoUrl = fmt.Sprintf("mongodb://localhost:%s", MONGODB_PORT)
-
-	ti, err := task.NewTask("task text", uuid.New())
-	if err != nil {
-		t.Errorf("Delete() failed to create a new task: err = '%v'", err)
-	}
-
-	// Add the task to the tasks collection
-	collection := mongodb.NewOrGetSingleton(cfg).Collection("tasks")
-	mongoTask := converter.ToRepoFromTask(ti)
-	_, err = collection.InsertOne(context.Background(), mongoTask)
-	if err != nil {
-		t.Errorf("Delete() failed to save a new task: err = '%v'", err)
-	}
-
-	// Delete the task from the the DB
-	r := repository.NewRepository(cfg)
-	err = r.Delete(context.Background(), ti.ID)
-	if err != nil {
-		t.Errorf("Delete() err = '%v'", err)
-	}
-
-	// Check if a task exists in the DB: should fail
-	err = collection.FindOne(context.Background(), bson.M{"_id": ti.ID.String()}).Decode(&mongoTask)
-	if !errors.Is(err, mongo.ErrNoDocuments) {
-		t.Errorf("Save() got = '%v', want = '%v'", err, user.ErrUserNotFound)
+	_, err = r.GetByID(ctx, id)
+	if err == nil || errors.Is(err, task.ErrTaskNotFound) {
+		t.Fatalf("err = %v, want a decode error", err)
 	}
 }

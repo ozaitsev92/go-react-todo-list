@@ -1,3 +1,4 @@
+// Package model contains the JSON DTOs of the v1 API.
 package model
 
 import (
@@ -6,7 +7,7 @@ import (
 	"github.com/ozaitsev92/tododdd/internal/domain/task"
 )
 
-// Task -.
+// Task is the JSON representation of a task.
 type Task struct {
 	ID        string    `json:"id"`
 	Text      string    `json:"text"`
@@ -16,7 +17,7 @@ type Task struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// ToResponseFromTask -.
+// ToResponseFromTask converts a domain task into its JSON representation.
 func ToResponseFromTask(t task.Task) Task {
 	return Task{
 		ID:        t.ID.String(),
@@ -28,7 +29,7 @@ func ToResponseFromTask(t task.Task) Task {
 	}
 }
 
-// ToResponseFromTaskCollection -.
+// ToResponseFromTaskCollection converts tasks, always returning a non-nil slice.
 func ToResponseFromTaskCollection(tasks []task.Task) []Task {
 	response := make([]Task, 0, len(tasks))
 	for _, t := range tasks {

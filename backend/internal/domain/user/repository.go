@@ -8,12 +8,16 @@ import (
 )
 
 var (
-	ErrUserNotFound      = errors.New("the user was not found in the repository")
-	ErrFailedToStoreUser = errors.New("failed to store the user")
+	// ErrUserNotFound is returned when no user matches the query.
+	ErrUserNotFound = errors.New("user not found")
+	// ErrEmailTaken is returned when saving a user whose email already exists.
+	ErrEmailTaken = errors.New("email is already registered")
 )
 
+// Repository persists users. Implementations return (possibly wrapped)
+// ErrUserNotFound and ErrEmailTaken; emails are already normalised.
 type Repository interface {
-	GetByID(context.Context, uuid.UUID) (User, error)
-	GetByEmail(context.Context, string) (User, error)
-	Save(context.Context, User) error
+	GetByID(ctx context.Context, id uuid.UUID) (User, error)
+	GetByEmail(ctx context.Context, email string) (User, error)
+	Save(ctx context.Context, u User) error
 }

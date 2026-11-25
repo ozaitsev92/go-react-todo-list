@@ -1,9 +1,11 @@
+// Package model holds the MongoDB document shape for tasks.
 package model
 
 import (
 	"time"
 )
 
+// Task is the stored task document.
 type Task struct {
 	ID        string    `bson:"_id"`
 	Text      string    `bson:"text"`
