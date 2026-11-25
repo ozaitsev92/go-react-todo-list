@@ -18,12 +18,11 @@ import (
 
 // Deps are the collaborators the router needs.
 type Deps struct {
-	Log           *slog.Logger
-	Tokens        *jwt.Service
-	Tasks         *usecase.TaskUseCase
-	Users         *usecase.UserUseCase
-	AllowedOrigin string
-	MaxBodyBytes  int64
+	Log          *slog.Logger
+	Tokens       *jwt.Service
+	Tasks        *usecase.TaskUseCase
+	Users        *usecase.UserUseCase
+	MaxBodyBytes int64
 	// Ready checks dependencies such as the database; nil means always ready.
 	Ready func(ctx context.Context) error
 }
@@ -40,7 +39,6 @@ func NewRouter(d Deps) *gin.Engine {
 		middleware.RequestLogger(d.Log),
 		metrics.Handler(),
 		middleware.Recovery(d.Log),
-		middleware.CORS(d.AllowedOrigin),
 		middleware.BodyLimit(d.MaxBodyBytes),
 	)
 	r.NoRoute(func(c *gin.Context) { abortError(c, http.StatusNotFound, "not found") })

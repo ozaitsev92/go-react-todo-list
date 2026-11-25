@@ -3,7 +3,6 @@ import axios from "axios";
 // Same-origin /api: Vite, nginx or the ingress route it to the backend.
 export const api = axios.create({
     baseURL: "/api",
-    withCredentials: true,
     timeout: 10_000,
     headers: { Accept: "application/json" },
 });

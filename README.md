@@ -21,7 +21,7 @@ Simple TODO app build with Go, React and MongoDB.
 
 ### Usage
 Run `make start` to run the app. The app is available at http://localhost:8081.
-`make start` generates a gitignored `.env` with a random JWT signing key and MongoDB credentials on first run (delete it to rotate), then starts the stack with `docker compose`.
+`make start` generates a gitignored `.env` with a random JWT signing key and MongoDB credentials on first run (delete it to rotate), then starts the stack with `docker compose`. Compose serves plain HTTP, so it sets `JWT_SECURE_COOKIE=false`; keep the default `true` anywhere served over HTTPS.
 
 ---
 
@@ -71,7 +71,6 @@ Values come from built-in defaults, then an optional TOML file (`CONFIG_PATH`, d
 | `STORAGE` | `mongo` | `memory` keeps data in-process only (lost on restart) |
 | `MONGO_URL` / `MONGO_DB_NAME` | `mongodb://localhost:27017` / `todo` | |
 | `BIND_ADDR` | `8080` | port |
-| `ALLOWED_ORIGIN` | `http://localhost:8081` | the single origin allowed by CORS |
 | `JWT_SESSION_LENGTH` | `30` | minutes |
 | `JWT_SECURE_COOKIE` | `true` | set `false` only for plain-HTTP development |
 | `JWT_COOKIE_DOMAIN`, `JWT_ISSUER` | `""`, `todo-api` | |
@@ -120,7 +119,7 @@ Dependencies point inward: `domain` imports nothing from the other layers. Both 
 
 ### Design decisions and trade-offs
 
-- **Stateless JWT in an HttpOnly cookie.** JavaScript can't read the token, so XSS can't steal it. CSRF is mitigated by `SameSite=Lax`, JSON-only mutations and a single-origin CORS policy. Tokens can't be revoked before they expire: logout clears the cookie, but a copied token stays valid for the rest of the session (30 min by default). Refresh tokens or a `jti` denylist would fix that; both are left out for simplicity.
+- **Stateless JWT in an HttpOnly cookie.** JavaScript can't read the token, so XSS can't steal it. CSRF is mitigated by `SameSite=Lax` and a same-origin deployment: the API sends no CORS headers, so browsers block cross-origin JSON requests at the preflight and never expose responses to other origins. Tokens can't be revoked before they expire: logout clears the cookie, but a copied token stays valid for the rest of the session (30 min by default). Refresh tokens or a `jti` denylist would fix that; both are left out for simplicity.
 - **Uniqueness comes from the database.** Emails are normalized (trimmed, lowercased; display-name forms like `Alice <a@x>` are rejected), and a unique MongoDB index created at startup enforces one account per email, even under concurrent sign-ups.
 - **Login is timing-safe.** Unknown emails still run one bcrypt comparison, and every credential failure returns the same `401`.
 - **Lifecycle.** Startup pings MongoDB with a timeout and creates indexes before serving. On SIGTERM the server drains HTTP and then disconnects MongoDB.

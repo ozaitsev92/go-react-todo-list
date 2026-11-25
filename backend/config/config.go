@@ -48,7 +48,6 @@ type Config struct {
 	JWTSessionLength  int    `toml:"jwt_session_length"`
 	JWTCookieDomain   string `toml:"jwt_cookie_domain"`
 	JWTSecureCookie   bool   `toml:"jwt_secure_cookie"`
-	AllowedOrigin     string `toml:"allowed_origin"`
 }
 
 // Default returns the defaults. It has no JWT key: one must be supplied.
@@ -71,7 +70,6 @@ func Default() Config {
 		JWTSessionLength:  30,
 		JWTCookieDomain:   "",
 		JWTSecureCookie:   true,
-		AllowedOrigin:     "http://localhost:8081",
 	}
 }
 
@@ -113,7 +111,6 @@ func applyEnv(cfg *Config, lookup func(string) (string, bool)) error {
 		"JWT_SIGNING_KEY":   &cfg.JWTSigningKey,
 		"JWT_ISSUER":        &cfg.JWTIssuer,
 		"JWT_COOKIE_DOMAIN": &cfg.JWTCookieDomain,
-		"ALLOWED_ORIGIN":    &cfg.AllowedOrigin,
 	}
 	for name, dst := range str {
 		if v, ok := lookup(name); ok {

@@ -22,5 +22,3 @@ jwt_issuer = "todo-api"
 jwt_session_length = 30     # minutes
 jwt_cookie_domain = ""      # empty = host-only cookie
 jwt_secure_cookie = true    # false only for local plain HTTP
-
-allowed_origin = "http://localhost:8081"

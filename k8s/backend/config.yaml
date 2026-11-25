@@ -12,4 +12,3 @@ data:
   JWT_SESSION_LENGTH: "30"
   JWT_SECURE_COOKIE: "true"
   JWT_COOKIE_DOMAIN: ""
-  ALLOWED_ORIGIN: "https://todo-app.example.local"

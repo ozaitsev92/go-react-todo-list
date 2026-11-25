@@ -7,9 +7,8 @@ describe("api", () => {
     let unregister = () => {};
     afterEach(() => unregister());
 
-    it("sends credentials and uses the same-origin /api base URL", () => {
+    it("uses the same-origin /api base URL", () => {
         expect(api.defaults.baseURL).toBe("/api");
-        expect(api.defaults.withCredentials).toBe(true);
     });
 
     it("calls the unauthorized handler on 401 from an authenticated endpoint", async () => {

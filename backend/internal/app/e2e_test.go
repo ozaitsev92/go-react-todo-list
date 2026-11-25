@@ -46,7 +46,7 @@ func TestE2E_SignupLoginCRUD_AgainstMongo(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	srv := httptest.NewServer(v1.NewRouter(v1.Deps{
 		Log: log, Tokens: tokens, Users: users, Tasks: usecase.NewTaskUseCase(store.tasks),
-		AllowedOrigin: cfg.AllowedOrigin, MaxBodyBytes: cfg.MaxBodyBytes, Ready: store.ready,
+		MaxBodyBytes: cfg.MaxBodyBytes, Ready: store.ready,
 	}))
 	defer srv.Close()
 

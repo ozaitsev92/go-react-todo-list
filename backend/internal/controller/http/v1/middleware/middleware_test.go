@@ -78,58 +78,6 @@ func TestAuthenticate(t *testing.T) {
 	}
 }
 
-func TestCORS(t *testing.T) {
-	t.Parallel()
-	const allowed = "http://localhost:8081"
-
-	r := gin.New()
-	r.Use(middleware.CORS(allowed))
-	r.PUT("/x", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	preflight := func(origin string) *httptest.ResponseRecorder {
-		req := httptest.NewRequest(http.MethodOptions, "/x", nil)
-		req.Header.Set("Origin", origin)
-		req.Header.Set("Access-Control-Request-Method", http.MethodPut)
-		return serve(r, req)
-	}
-
-	t.Run("preflight from allowed origin", func(t *testing.T) {
-		t.Parallel()
-		w := preflight(allowed)
-		if w.Code != http.StatusNoContent || w.Header().Get("Access-Control-Allow-Origin") != allowed ||
-			w.Header().Get("Access-Control-Allow-Credentials") != "true" ||
-			!strings.Contains(w.Header().Get("Access-Control-Allow-Methods"), "PUT") {
-			t.Fatalf("status %d headers %v", w.Code, w.Header())
-		}
-	})
-
-	t.Run("preflight from foreign origin is rejected", func(t *testing.T) {
-		t.Parallel()
-		w := preflight("https://evil.example")
-		if w.Code != http.StatusForbidden || w.Header().Get("Access-Control-Allow-Origin") != "" {
-			t.Fatalf("status %d headers %v", w.Code, w.Header())
-		}
-	})
-
-	t.Run("simple request from foreign origin gets no ACAO but Vary", func(t *testing.T) {
-		t.Parallel()
-		req := httptest.NewRequest(http.MethodPut, "/x", nil)
-		req.Header.Set("Origin", "https://evil.example")
-		w := serve(r, req)
-		if w.Header().Get("Access-Control-Allow-Origin") != "" || w.Header().Get("Vary") != "Origin" {
-			t.Fatalf("headers %v", w.Header())
-		}
-	})
-
-	t.Run("OPTIONS without Origin is not a preflight", func(t *testing.T) {
-		t.Parallel()
-		w := serve(r, httptest.NewRequest(http.MethodOptions, "/x", nil))
-		if w.Code == http.StatusNoContent {
-			t.Fatalf("plain OPTIONS answered as preflight")
-		}
-	})
-}
-
 func TestBodyLimit(t *testing.T) {
 	t.Parallel()
 	r := gin.New()

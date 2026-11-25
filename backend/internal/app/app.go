@@ -61,13 +61,12 @@ func Run(cfg config.Config, log *slog.Logger) error {
 
 	gin.SetMode(gin.ReleaseMode)
 	handler := v1.NewRouter(v1.Deps{
-		Log:           log,
-		Tokens:        tokens,
-		Tasks:         usecase.NewTaskUseCase(store.tasks),
-		Users:         users,
-		AllowedOrigin: cfg.AllowedOrigin,
-		MaxBodyBytes:  cfg.MaxBodyBytes,
-		Ready:         store.ready,
+		Log:          log,
+		Tokens:       tokens,
+		Tasks:        usecase.NewTaskUseCase(store.tasks),
+		Users:        users,
+		MaxBodyBytes: cfg.MaxBodyBytes,
+		Ready:        store.ready,
 	})
 
 	server := httpserver.New(handler,

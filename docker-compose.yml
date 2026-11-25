@@ -31,7 +31,7 @@ services:
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?run "make env" to generate .env}
       MONGO_URL: mongodb://${MONGO_ROOT_USER:?missing in .env}:${MONGO_ROOT_PASSWORD:?missing in .env}@todoapp_mongodb:27017/?authSource=admin
       MONGO_DB_NAME: todo
-      ALLOWED_ORIGIN: http://localhost:8081
+      JWT_SECURE_COOKIE: "false"
       LOG_LEVEL: info
     depends_on:
       todoapp_mongodb:

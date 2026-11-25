@@ -25,10 +25,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	testOrigin   = "http://localhost:8081"
-	testPassword = "Secret123"
-)
+const testPassword = "Secret123"
 
 func init() { gin.SetMode(gin.TestMode) }
 
@@ -70,7 +67,7 @@ func newEnv(t *testing.T, opts ...option) *env {
 
 	d := v1.Deps{
 		Log: logger.Discard(), Tokens: tokens, Users: users,
-		AllowedOrigin: testOrigin, MaxBodyBytes: 4 << 10,
+		MaxBodyBytes: 4 << 10,
 	}
 	for _, o := range opts {
 		o(&d, e)
@@ -476,17 +473,17 @@ func TestTaskHandler_InternalError_DoesNotLeakDetails(t *testing.T) {
 	}
 }
 
-func TestCORS_ThroughRouter(t *testing.T) {
+func TestRouter_RejectsCrossOriginPreflight(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
 
 	req := httptest.NewRequest(http.MethodOptions, "/v1/tasks/"+uuid.NewString(), nil)
-	req.Header.Set("Origin", testOrigin)
+	req.Header.Set("Origin", "https://evil.example")
 	req.Header.Set("Access-Control-Request-Method", http.MethodDelete)
 	w := httptest.NewRecorder()
 	e.router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusNoContent || w.Header().Get("Access-Control-Allow-Origin") != testOrigin {
+	if w.Code < 300 || w.Header().Get("Access-Control-Allow-Origin") != "" {
 		t.Fatalf("preflight %d %v", w.Code, w.Header())
 	}
 }
